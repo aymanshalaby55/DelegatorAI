@@ -1,0 +1,2 @@
+cd apps/api && uv run ruff check .
+cd apps/web && npx lint-staged
