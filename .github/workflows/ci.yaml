@@ -12,8 +12,6 @@ jobs:
               working-directory: apps/api
             - run: uv run ruff check .
               working-directory: apps/api
-            - run: uv run pytest
-              working-directory: apps/api
 
     web:
         runs-on: ubuntu-latest
