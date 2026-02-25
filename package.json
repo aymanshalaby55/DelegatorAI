@@ -5,6 +5,7 @@
     "apps/web",
     "packages/*"
   ],
+  "type": "module",
   "lint-staged": {
     "apps/web/**/*.{ts,tsx}": [
       "eslint --fix",
