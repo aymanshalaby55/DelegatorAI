@@ -31,3 +31,8 @@ Thumbs.db
 *.swp
 *.swo
 __init__.py
+
+
+.venv/
+__pycache__/
+*.pyc
