@@ -1,13 +1,9 @@
 from fastapi import FastAPI
 from app.api.routes.v1.router import router as v1_router
+import app.config as configs
 
 
-
-
-
-settings = get_settings();
-
-
+settings = configs.get_settings()
 
 # api integrations
 v1_app = FastAPI(title="API v1", version="1.0.0")
