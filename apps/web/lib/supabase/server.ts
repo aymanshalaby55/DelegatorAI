@@ -1,4 +1,3 @@
-// lib/supabase/server.ts
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -20,6 +19,7 @@ export async function createClient() {
               cookieStore.set(name, value, options),
             );
           } catch (error) {
+            console.log(error);
             // → Ignore when called from a Server Component (no middleware refresh).
             // → This catch block is intentional & documented by Supabase.
           }

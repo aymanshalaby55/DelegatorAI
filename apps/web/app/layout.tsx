@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import Particals from "@/components/layout/Particals";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground antialiased relative`}
+        style={{ overflow: "hidden" }} // safeguard for particles
       >
-        {children}
+        <Particals />
+        <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
       </body>
     </html>
   );

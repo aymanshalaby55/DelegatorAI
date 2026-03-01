@@ -3,12 +3,6 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import {
-  Clock,
-  Zap,
-  Globe,
-  Shield,
-  Layers,
-  BarChart3,
   Link2,
   Send,
   GitBranch,

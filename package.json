@@ -8,8 +8,8 @@
   "type": "module",
   "lint-staged": {
     "apps/web/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix"
     ]
   },
   "scripts": {
@@ -21,7 +21,9 @@
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
-    "concurrently": "^8.0.0"
+    "concurrently": "^8.0.0",
+    "eslint": "^10.0.2",
+    "prettier": "^3.8.1"
   },
   "dependencies": {
     "husky": "^9.1.7",

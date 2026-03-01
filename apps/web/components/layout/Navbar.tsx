@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import Image from "next/image";
 
 const navItems = [
   { label: "Features", href: "#features" },
@@ -105,7 +106,7 @@ const Navbar = () => {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt=""
                     className="h-8 w-8 rounded-full object-cover border border-white/20 shrink-0"
@@ -184,7 +185,7 @@ const Navbar = () => {
               {user ? (
                 <div className="flex items-center gap-3 pt-2 border-t border-white/10">
                   {avatarUrl ? (
-                    <img
+                    <Image
                       src={avatarUrl}
                       alt=""
                       className="h-10 w-10 rounded-full object-cover border border-white/20"
