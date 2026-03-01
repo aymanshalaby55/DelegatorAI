@@ -36,4 +36,3 @@ __init__.py
 .venv/
 __pycache__/
 *.pyc
-uv.lock

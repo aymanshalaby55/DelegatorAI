@@ -6,7 +6,6 @@ class Settings(BaseSettings):
     # App
     app_name: str = "DelegatorAI"
     debug: bool = False
-    api_prefix: str = "/api/v1"
 
     # CORS
     frontend_url: str = "https://1wwmrxxr-3000.uks1.devtunnels.ms"
@@ -52,7 +51,7 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://localhost:6379/1"
 
     # Default LLM
-    default_llm_provider: str = "openai"
+    default_llm_provider: str = "gemini"
 
     model_config = {
         "env_file": ".env",
