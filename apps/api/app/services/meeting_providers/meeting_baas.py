@@ -20,58 +20,69 @@ class MeetingBaasProvider(MeetingProvider):
         }
 
     async def join(self, meeting_url: str, bot_name: str, language_code: str = "en") -> dict:
+        missing = []
         if not self.api_key:
-            raise HTTPException(status_code=500, detail="Meeting BaaS API key not configured")
+            missing.append("API key")
         if not self.base_url:
-            raise HTTPException(status_code=500, detail="Meeting BaaS base URL not configured")
-        if not hasattr(settings, 'meeting_baas_webhook_url') or not settings.meeting_baas_webhook_url:
-            raise HTTPException(status_code=500, detail="Meeting BaaS webhook URL not configured")
-        try:
-            async with httpx.AsyncClient() as client:
+            missing.append("base URL")
+        if not getattr(settings, "meeting_baas_webhook_url", None):
+            missing.append("webhook URL")
+        if missing:
+            raise ValueError(f"Meeting BaaS not configured: {', '.join(missing)}")
+
+        payload = {
+            "meeting_url": meeting_url,
+            "bot_name": bot_name,
+            "recording_mode": "speaker_view",
+            "transcription_config": {
+                "provider": "gladia",
+                "custom_params": {
+                    "translation": True,
+                    "translation_config": {
+                        "target_languages": [language_code],
+                        "model": "enhanced",
+                        "match_original_utterances": True,
+                        "lipsync": True,
+                        "context_adaptation": True,
+                    },
+                },
+            },
+            "automatic_leave": {"waiting_room_timeout": 600},
+            "webhook_url": settings.meeting_baas_webhook_url,
+        }
+
+        async with httpx.AsyncClient() as client:
+            try:
                 response = await client.post(
                     f"{self.base_url}/v2/bots",
-                    json={
-                        "meeting_url": meeting_url,
-                        "bot_name": bot_name,
-                        "recording_mode": "speaker_view",
-                        "transcription_config": {
-                            "provider": "gladia",
-                            "custom_params": {
-                                "translation": True,
-                                "translation_config": {
-                                    "target_languages": [language_code],
-                                    "model": "enhanced",
-                                    "match_original_utterances": True,
-                                    "lipsync": True,
-                                    "context_adaptation": True
-                                }
-                            }
-                        },
-                        "automatic_leave": {"waiting_room_timeout": 600},
-                        "webhook_url": settings.meeting_baas_webhook_url,
-                    },
+                    json=payload,
                     headers=self.headers,
                     timeout=30,
                 )
                 response.raise_for_status()
-                data =  response.json()
-            return {"id": data["data"]["bot_id"], **data}
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail=f"Meeting BaaS error {exc.response.status_code}: {exc.response.text}"
-            ) from exc
-        except httpx.RequestError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail=f"Meeting BaaS connection error: {exc}"
-            ) from exc
-        except Exception as exc:
-            raise HTTPException(
-                status_code=502,
-                detail=f"Meeting BaaS error: {exc}"
-            ) from exc
 
+            except httpx.HTTPStatusError as exc:
+                raise HTTPException(
+                    status_code=exc.response.status_code,  # don't hide the real code
+                    detail={
+                        "message": "Meeting BaaS returned an error",
+                        "upstream_status": exc.response.status_code,
+                        "upstream_body": exc.response.text,
+                    },
+                ) from exc
+
+            except httpx.TimeoutException as exc:
+                raise HTTPException(
+                    status_code=504, detail="Meeting BaaS request timed out"
+                ) from exc
+
+            except httpx.RequestError as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Could not reach Meeting BaaS: {type(exc).__name__}",
+                ) from exc
+
+   
     async def leave(self, bot_id: str) -> None:
         if not bot_id:
             raise HTTPException(status_code=400, detail="Missing bot_id for leaving the meeting")
