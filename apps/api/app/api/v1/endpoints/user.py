@@ -1,5 +1,5 @@
 from fastapi import APIRouter , Depends
-from app.api.routes.deps import get_current_user
+from app.api.deps import get_current_user
 router = APIRouter()
 
 @router.get("/me")

@@ -1,0 +1,11 @@
+{
+  "files.exclude": {
+    "**/__init__.py": true,
+    "**/__pycache__": true,
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.compactFolders": false,
+  "explorer.fileNesting.patterns": {
+    "__init__.py": "${capture}.py"
+  }
+}

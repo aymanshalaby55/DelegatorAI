@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-from app.config import get_settings, Settings
+from app.core.config import get_settings, Settings
 from app.db.supabase.supbaseJwks import get_public_key
 security = HTTPBearer()
 

@@ -4,7 +4,7 @@ from app.services.meeting_service.webhooks_service import (
     handle_transcript_ready,
     handle_recording_ready,
 )
-from app.config import get_settings
+from app.core.config import get_settings
 from fastapi import APIRouter, Request, HTTPException, Header
 import hmac
 import hashlib

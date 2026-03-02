@@ -26,7 +26,6 @@ apps/api/.ruff_cache/
 Thumbs.db
 
 # ===== Editors =====
-.vscode/
 .idea/
 *.swp
 *.swo

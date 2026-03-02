@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.models.meetings.JoinMeetingRequest import JoinMeetingRequest
-from app.config import get_settings, Settings
-from app.api.routes.deps import get_current_user
+from app.core.config import get_settings, Settings
+from app.api.deps import get_current_user
 import app.services.meeting_service.meeting_service as meeting_service
 
 router = APIRouter()
