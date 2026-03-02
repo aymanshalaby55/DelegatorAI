@@ -30,7 +30,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-__init__.py
 
 
 .venv/
