@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Integrations from "./Integrations";
+import Link from "next/link";
 
-const HeroSection = () => {
+export default function Hero() {
   return (
     <section className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-16">
       {/* Background glow effects */}
@@ -65,9 +66,12 @@ const HeroSection = () => {
             <Button
               size="lg"
               className="glow-primary text-base px-8 h-12 gap-2"
+              asChild
             >
-              Start Free Trial
-              <ArrowRight className="h-4 w-4" />
+              <Link href="/login">
+                Start Free Trial
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
             <Button
               variant="outline"
@@ -93,6 +97,4 @@ const HeroSection = () => {
       </div>
     </section>
   );
-};
-
-export default HeroSection;
+}

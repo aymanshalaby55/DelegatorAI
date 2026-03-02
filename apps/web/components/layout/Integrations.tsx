@@ -1,144 +1,122 @@
 "use client";
-import { motion } from "framer-motion";
+import { useMemo } from "react";
+import { SiGithub, SiSlack, SiJira, SiNotion, SiLinear } from "react-icons/si";
+import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
+import LogoLoop, { LogoItem } from "@/components/layout/react-bits/LogoLoop";
 
-const integrations = [
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Integration {
+  icon: React.ReactNode;
+  label: string;
+  bg: string;
+  iconColor: string;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const INTEGRATIONS: Integration[] = [
   {
-    name: "GitHub",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-      </svg>
-    ),
-    color: "#e6edf3",
+    icon: <SiGithub size={20} />,
+    label: "GitHub",
     bg: "rgba(230,237,243,0.08)",
+    iconColor: "#181717",
   },
   {
-    name: "Slack",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
-      </svg>
-    ),
-    color: "#E01E5A",
+    icon: <SiSlack size={20} />,
+    label: "Slack",
     bg: "rgba(224,30,90,0.1)",
+    iconColor: "#4A154B",
   },
   {
-    name: "Google Meet",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-        <path
-          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-          fill="#00897B"
-        />
-      </svg>
-    ),
-    color: "#00897B",
+    icon: <FaGoogle size={20} />,
+    label: "Google Meet",
     bg: "rgba(0,137,123,0.1)",
+    iconColor: "#00897B",
   },
   {
-    name: "Microsoft Teams",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#7B83EB">
-        <path d="M20.625 7.5h-5.25v9H12v-9H6.75v-1.5h13.875V7.5zM9.375 10.5v6h1.5v-6h-1.5zm3.75 0v6h1.5v-6h-1.5z" />
-        <path d="M15.75 3.375A2.625 2.625 0 1 1 13.125.75a2.625 2.625 0 0 1 2.625 2.625zM12 6.375A1.875 1.875 0 1 1 10.125 4.5 1.875 1.875 0 0 1 12 6.375z" />
-      </svg>
-    ),
-    color: "#7B83EB",
+    icon: <FaMicrosoft size={20} />,
+    label: "Microsoft Teams",
     bg: "rgba(123,131,235,0.1)",
+    iconColor: "#7B83EB",
   },
   {
-    name: "Zoom",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#2D8CFF">
-        <path d="M24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-6.25-5.5H8.75A2.25 2.25 0 0 0 6.5 8.75v5a2.25 2.25 0 0 0 2.25 2.25H15.25a2.25 2.25 0 0 0 2.25-2.25v-5A2.25 2.25 0 0 0 17.75 6.5zm1.75 2.25l-3 2v2.5l3 2V8.75z" />
-      </svg>
-    ),
-    color: "#2D8CFF",
+    icon: <FaVideo size={20} />,
+    label: "Zoom",
     bg: "rgba(45,140,255,0.1)",
+    iconColor: "#2D8CFF",
   },
   {
-    name: "Notion",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-        <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z" />
-      </svg>
-    ),
-    color: "#ffffff",
+    icon: <SiNotion size={20} />,
+    label: "Notion",
     bg: "rgba(255,255,255,0.07)",
+    iconColor: "#000000",
   },
   {
-    name: "Jira",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#2684FF">
-        <path d="M11.571 11.429l-3.68-3.68A6.857 6.857 0 0 0 11.43 18.43l3.68-3.68-3.539-3.321zm.858 7.142a6.857 6.857 0 0 0 3.538-9.68l-3.538 3.538 3.538 3.538-3.538 2.604zm-1.715-14.285a6.857 6.857 0 0 0-3.538 9.68l3.538-3.538-3.538-3.538 3.538-2.604z" />
-      </svg>
-    ),
-    color: "#2684FF",
+    icon: <SiJira size={20} />,
+    label: "Jira",
     bg: "rgba(38,132,255,0.1)",
+    iconColor: "#0052CC",
   },
   {
-    name: "Linear",
-    icon: (
-      <svg viewBox="0 0 100 100" className="h-5 w-5" fill="currentColor">
-        <path d="M1.22541 61.5228c-.2225-.9485.90748-1.5459 1.59638-.857l36.5093 36.5093c.6889.6889.0915 1.8189-.857 1.5964C20.0515 94.4522 5.54779 79.9485 1.22541 61.5228zM.00189135 46.8891c-.01764375.2833.08887.5599.28957.7606L52.3503 99.7085c.2007.2007.4773.3075.7606.2896 2.3692-.1476 4.6938-.46 6.9624-.9259.7645-.157 1.0301-1.0963.4782-1.6481L2.57595 39.4485c-.55186-.5519-1.49117-.2863-1.648174.4782-.465915 2.2686-.77832 4.5932-.925915 6.9624zM4.21093 29.7054c-.16649.3738-.08169.8106.20765 1.1l64.77602 64.776c.2894.2894.7262.3742 1.1.2077 1.7861-.7956 3.5171-1.6927 5.1775-2.684.6355-.3796.7049-1.2615.1475-1.8189L8.69872 24.3367c-.55742-.5574-1.43927-.4879-1.81894.1475-.99128 1.6604-1.88831 3.3914-2.68385 5.1772zM13.0317 18.2055c-.4288-.4288-.4444-1.1209-.0045-1.5399 7.1714-6.8598 16.8382-11.0839 27.5336-11.0839 22.0767 0 39.9998 17.9231 39.9998 39.9998 0 10.6954-4.2241 20.3622-11.0839 27.5336-.419.4399-1.1111.4243-1.5399-.0045L13.0317 18.2055z" />
-      </svg>
-    ),
-    color: "#5E6AD2",
+    icon: <SiLinear size={20} />,
+    label: "Linear",
     bg: "rgba(94,106,210,0.1)",
+    iconColor: "#5E6AD2",
   },
 ];
 
-const allTools = [...integrations, ...integrations];
+const BG_COLOR = "hsl(240 10% 4%)";
 
-interface ToolPillProps {
-  tool: (typeof integrations)[0];
-}
+// ─── Subcomponents ────────────────────────────────────────────────────────────
 
-const ToolPill = ({ tool }: ToolPillProps) => (
-  <div
+const IntegrationBadge = ({ icon, label, bg, iconColor }: Integration) => (
+  <span
     className="flex items-center gap-2.5 rounded-full px-4 py-2 border border-border backdrop-blur-sm whitespace-nowrap"
-    style={{ background: tool.bg }}
+    style={{ background: bg }}
   >
-    <span style={{ color: tool.color }}>{tool.icon}</span>
-    <span className="text-sm font-medium text-muted-foreground">
-      {tool.name}
-    </span>
-  </div>
+    <span style={{ color: iconColor }}>{icon}</span>
+    <span className="text-sm font-medium text-muted-foreground">{label}</span>
+  </span>
 );
 
-interface IntegrationsMarqueeProps {
-  reverse?: boolean;
-}
+const FadeMask = ({ side }: { side: "left" | "right" }) => (
+  <div
+    className="pointer-events-none absolute top-0 h-full w-20 z-10"
+    style={{
+      [side]: 0,
+      background: `linear-gradient(to ${side === "left" ? "right" : "left"}, ${BG_COLOR}, transparent)`,
+    }}
+  />
+);
 
-const IntegrationsMarquee = ({ reverse = false }: IntegrationsMarqueeProps) => {
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+const IntegrationsMarquee = ({ reverse = false }: { reverse?: boolean }) => {
+  const logoItems = useMemo<LogoItem[]>(() => {
+    const items = INTEGRATIONS.map((integration) => ({
+      node: <IntegrationBadge {...integration} />,
+      title: integration.label,
+      ariaLabel: `${integration.label} Integration`,
+    }));
+    return [...items, ...items]; // double for seamless loop
+  }, []);
+
   return (
     <div className="relative w-full overflow-hidden py-2">
-      <div
-        className="pointer-events-none absolute left-0 top-0 h-full w-20 z-10"
-        style={{
-          background: "linear-gradient(to right, hsl(240 10% 4%), transparent)",
-        }}
+      <FadeMask side="left" />
+      <FadeMask side="right" />
+      <LogoLoop
+        logos={logoItems}
+        speed={80 * (reverse ? -1 : 1)}
+        gap={12}
+        logoHeight={36}
+        width="100%"
+        fadeOut={false}
+        pauseOnHover={false}
+        style={{ minWidth: "100%" }}
+        ariaLabel="Integrations"
       />
-      <div
-        className="pointer-events-none absolute right-0 top-0 h-full w-20 z-10"
-        style={{
-          background: "linear-gradient(to left, hsl(240 10% 4%), transparent)",
-        }}
-      />
-      <motion.div
-        className="flex gap-3"
-        animate={{ x: reverse ? ["-50%", "0%"] : ["0%", "-50%"] }}
-        transition={{
-          duration: 28,
-          ease: "linear",
-          repeat: Infinity,
-        }}
-        style={{ width: "max-content" }}
-      >
-        {allTools.map((tool, i) => (
-          <ToolPill key={`${tool.name}-${i}`} tool={tool} />
-        ))}
-      </motion.div>
     </div>
   );
 };

@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
+import LogoImg from "@/public/logo.jpg";
+import toast from "react-hot-toast";
 
 const navItems = [
   { label: "Features", href: "#features" },
@@ -25,14 +27,17 @@ const Navbar = () => {
 
   useEffect(() => {
     const supabase = createClient();
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -41,46 +46,70 @@ const Navbar = () => {
     user?.user_metadata?.name ??
     user?.email?.split("@")[0] ??
     "User";
+
   const avatarUrl =
     user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
 
   const handleSignOut = async () => {
     const supabase = createClient();
-    await supabase.auth.signOut();
-    setUser(null);
-    router.refresh();
+    toast.loading("Signing out...", { id: "logout" });
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.dismiss("logout");
+        toast.error("Logout failed: " + error.message);
+        return;
+      }
+      setUser(null);
+      router.refresh();
+      toast.dismiss("logout");
+      toast.success("Logged out successfully.");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.dismiss("logout");
+        toast.error("Error during logout: " + error.message);
+      } else {
+        toast.dismiss("logout");
+        toast.error("Error during logout: Unknown error");
+      }
+    }
   };
 
-  // Handles navigation to login page
   const handleLogin = () => {
     router.push("/login");
   };
-  // Handles navigation to login page ("Get Started" also goes to login)
+
   const handleGetStarted = () => {
     router.push("/login");
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4 sm:px-6">
-        {/* Logo + nav links grouped left */}
-        <div className="hidden md:flex items-center gap-12">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="font-display font-bold text-primary-foreground text-sm">
-                MD
-              </span>
-            </div>
-            <span className="font-display font-bold text-xl text-white whitespace-nowrap">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/50 backdrop-blur-sm">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+        {/* Desktop: Logo + Navigation */}
+        <div className="hidden lg:flex items-center gap-10 xl:gap-14">
+          <Link href="/" className="flex items-center gap-2">
+            {/* Logo: perfectly circular & flush, as in image */}
+            <Image
+              src={LogoImg}
+              alt="Meeting Delegator Logo"
+              width={62}
+              height={62}
+              quality={100}
+              className="rounded-full object-cover h-10 w-10 border-none"
+              priority={true}
+            />
+            <span className="font-bold text-xl text-white font-sans whitespace-nowrap">
               Meeting Delegator
             </span>
           </Link>
-          <div className="flex items-center gap-1 border-l border-white/10 pl-8">
+
+          <div className="flex items-center gap-2 border-l border-white/10 pl-10">
             {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
-                className="text-sm font-medium text-white/70 hover:text-white px-3 py-2 rounded-md hover:bg-white/5 transition-colors"
+                className="text-sm font-semibold text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-200"
               >
                 {item.label}
               </a>
@@ -88,44 +117,50 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Logo only on mobile */}
-        <Link href="/" className="flex md:hidden items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <span className="font-display font-bold text-primary-foreground text-sm">
-              MD
-            </span>
-          </div>
-          <span className="font-display font-bold text-xl text-white">
+        {/* Mobile: Logo only */}
+        <Link href="/" className="flex lg:hidden items-center gap-2">
+          <Image
+            src={LogoImg}
+            alt="Meeting Delegator Logo"
+            width={32}
+            height={32}
+            quality={100}
+            className="rounded-full object-cover h-8 w-8 border-none"
+            priority={true}
+          />
+          <span className="font-bold text-lg sm:text-xl text-white font-sans">
             Meeting Delegator
           </span>
         </Link>
 
-        {/* Right: actions */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Desktop: User / Auth buttons */}
+        <div className="hidden lg:flex items-center gap-4">
           {user ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 min-w-0">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
-                    alt=""
-                    className="h-8 w-8 rounded-full object-cover border border-white/20 shrink-0"
+                    alt="User avatar"
+                    className="h-9 w-9 rounded-full object-cover border border-white/20"
+                    width={36}
+                    height={36}
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary/30 border border-white/20 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-semibold text-primary">
+                  <div className="h-9 w-9 rounded-full bg-primary/30 border border-white/20 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">
                       {displayName.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
-                <span className="text-sm font-medium text-white/90 truncate max-w-[120px]">
+                <span className="text-sm font-medium text-white/90 truncate max-w-[140px] xl:max-w-[180px]">
                   {displayName}
                 </span>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-white/70 hover:text-white hover:bg-white/10"
+                className="text-white/80 hover:text-white hover:bg-white/10 px-3"
                 onClick={handleSignOut}
                 aria-label="Sign out"
               >
@@ -133,90 +168,92 @@ const Navbar = () => {
               </Button>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-3 sm:gap-4">
               <Button
                 size="sm"
-                className="bg-white/15 text-white border border-white/20 hover:bg-white/25 text-base px-5"
+                className="bg-black/12 hover:bg-white/20 text-white border border-white/15 text-sm sm:text-base px-4 sm:px-6 h-9 sm:h-10"
                 onClick={handleLogin}
               >
                 Log In
               </Button>
               <Button
                 size="sm"
-                className="glow-primary text-base px-5"
+                className="glow-primary text-sm sm:text-base px-5 sm:px-7 h-9 sm:h-10"
                 onClick={handleGetStarted}
               >
-                Get Started Free
+                Get Started
               </Button>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Mobile toggle */}
+        {/* Mobile menu toggle */}
         <button
-          className="md:hidden text-white"
+          className="lg:hidden text-white p-1 -mr-1"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          {mobileOpen ? <X size={26} /> : <Menu size={26} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu dropdown */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass border-t border-white/10 overflow-hidden"
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="lg:hidden glass border-t border-white/10 overflow-hidden"
           >
-            <div className="flex flex-col gap-4 p-6">
+            <div className="flex flex-col gap-5 p-6 pt-5 pb-8">
               {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-white/80 hover:text-white transition-colors text-base font-medium"
+                  className="text-base sm:text-lg font-semibold text-white hover:text-white py-1.5 transition-colors"
                   onClick={() => setMobileOpen(false)}
                 >
                   {item.label}
                 </a>
               ))}
+
               {user ? (
-                <div className="flex items-center gap-3 pt-2 border-t border-white/10">
+                <div className="flex items-center gap-4 pt-4 mt-2 border-t border-white/10">
                   {avatarUrl ? (
                     <Image
                       src={avatarUrl}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover border border-white/20"
+                      alt="User avatar"
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 rounded-full object-cover border border-white/20"
                     />
                   ) : (
-                    <div className="h-10 w-10 rounded-full bg-primary/30 border border-white/20 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary">
-                        {displayName.charAt(0).toUpperCase()}
-                      </span>
+                    <div className="h-11 w-11 rounded-full bg-primary/30 border border-white/20 flex items-center justify-center text-lg font-semibold text-primary">
+                      {displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="text-white/90 font-medium flex-1 truncate">
-                    {displayName}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white/90 font-medium truncate">
+                      {displayName}
+                    </div>
+                  </div>
                   <Button
-                    size="sm"
                     variant="ghost"
-                    className="text-white/70"
-                    onClick={() => {
+                    className="text-red-300 hover:text-red-200 hover:bg-red-950/30 px-4"
+                    onClick={async () => {
                       setMobileOpen(false);
-                      handleSignOut();
+                      await handleSignOut();
                     }}
                   >
                     Sign out
                   </Button>
                 </div>
               ) : (
-                <div className="flex gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row gap-4 pt-5 mt-2">
                   <Button
-                    size="sm"
-                    className="bg-white/15 text-white border border-white/20 hover:bg-white/25 flex-1"
+                    className="bg-white/12 hover:bg-white/20 border border-white/15 h-11 text-base font-medium"
                     onClick={() => {
                       setMobileOpen(false);
                       handleLogin();
@@ -225,14 +262,13 @@ const Navbar = () => {
                     Log In
                   </Button>
                   <Button
-                    size="sm"
-                    className="glow-primary flex-1"
+                    className="glow-primary h-11 text-base font-medium"
                     onClick={() => {
                       setMobileOpen(false);
                       handleGetStarted();
                     }}
                   >
-                    Get Started
+                    Get Started Free
                   </Button>
                 </div>
               )}
