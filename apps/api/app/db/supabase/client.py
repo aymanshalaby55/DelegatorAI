@@ -1,6 +1,6 @@
 from app.config import get_settings
 from supabase import create_client, Client
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 
 def CreateSupabaseClient() -> Client:
     "get supabase client for the api"

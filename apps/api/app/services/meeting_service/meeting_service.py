@@ -32,7 +32,7 @@ async def join_meeting(user: dict, data: JoinMeetingRequest, provider_name: str)
     """Send bot to meeting and save record to DB"""
     try:
         provider = MeetingProviderFactory.get(provider_name)
-    except Exception as e:
+    except Exception :
         raise HTTPException(status_code=400, detail=f"Invalid meeting provider: {provider_name}")
 
     try:

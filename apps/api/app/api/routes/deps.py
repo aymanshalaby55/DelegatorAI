@@ -1,9 +1,7 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-from jwt.exceptions import InvalidTokenError
 from app.config import get_settings, Settings
-import requests
 from app.db.supabase.supbaseJwks import get_public_key
 security = HTTPBearer()
 
