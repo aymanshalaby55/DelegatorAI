@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -14,14 +15,14 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_key: str = ""
     supabase_service_role_key: str = ""
-
+    supabase_jwt_key: str = ""
     # Auth
     nextauth_secret: str = ""
-    jwt_algorithm: str = "HS256"
+    jwt_algorithm: str = "P-256"
 
     # Meeting BaaS
     meeting_baas_api_key: str = ""
-    meeting_baas_base_url: str = "https://api.meetingbaas.com"
+    meeting_baas_base_url: str = "https://api.meetingbaas.com/"
     meeting_baas_webhook_url: str = ""
     meeting_baas_webhook_secret: str = ""  # SVIX signing secret from Meeting BaaS dashboard
 
@@ -53,10 +54,15 @@ class Settings(BaseSettings):
     # Default LLM
     default_llm_provider: str = "gemini"
 
+    # Default meeting provider
+    default_meeting_provider: str = "meeting_baas"
+
     model_config = {
-        "env_file": ".env",
+        "env_file": Path(__file__).parent.parent.parent.parent / ".env",
+        # config.py → app/ → api/ → apps/ → DelegatorAI/ ← .env is here
         "env_file_encoding": "utf-8",
         "case_sensitive": False,
+        "extra": "ignore",
     }
 
 

@@ -31,6 +31,13 @@ const Navbar = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        console.log("User token:", session.access_token);
+      } else {
+        console.log("No user token found.");
+      }
+    });
 
     const {
       data: { subscription },
