@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .endpoints import health , user , meetings , webhooks
+from .endpoints import health, user, meetings, webhooks
 
 
 router = APIRouter()

@@ -23,7 +23,9 @@ class Settings(BaseSettings):
     meeting_baas_api_key: str = ""
     meeting_baas_base_url: str = "https://api.meetingbaas.com/"
     meeting_baas_webhook_url: str = ""
-    meeting_baas_webhook_secret: str = ""  # SVIX signing secret from Meeting BaaS dashboard
+    meeting_baas_webhook_secret: str = (
+        ""  # SVIX signing secret from Meeting BaaS dashboard
+    )
 
     # Gemini (Google)
     gemini_api_key: str = ""
@@ -37,13 +39,17 @@ class Settings(BaseSettings):
     # GitHub
     github_client_id: str = ""
     github_client_secret: str = ""
-    github_oauth_redirect_uri: str = "https://1wwmrxxr-3000.uks1.devtunnels.ms/auth/callback/github"
+    github_oauth_redirect_uri: str = (
+        "https://1wwmrxxr-3000.uks1.devtunnels.ms/auth/callback/github"
+    )
 
     # Slack
     slack_client_id: str = ""
     slack_client_secret: str = ""
     slack_signing_secret: str = ""
-    slack_oauth_redirect_uri: str = "https://1wwmrxxr-3000.uks1.devtunnels.ms/auth/callback/slack"
+    slack_oauth_redirect_uri: str = (
+        "https://1wwmrxxr-3000.uks1.devtunnels.ms/auth/callback/slack"
+    )
 
     # Redis / Celery
     redis_url: str = "redis://localhost:6379/0"
@@ -55,6 +61,9 @@ class Settings(BaseSettings):
 
     # Default meeting provider
     default_meeting_provider: str = "meeting_baas"
+
+    # Resend
+    resend_api_key: str = ""
 
     model_config = {
         "env_file": "../../../.env",

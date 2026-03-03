@@ -3,7 +3,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from app.core.config import get_settings, Settings
 from app.db.supabase.supbaseJwks import get_public_key
+
 security = HTTPBearer()
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -19,10 +21,7 @@ async def get_current_user(
         public_key = get_public_key(kid, settings.supabase_url)
 
         payload = jwt.decode(
-            token,
-            public_key,
-            algorithms=["ES256"],
-            options={"verify_aud": False}
+            token, public_key, algorithms=["ES256"], options={"verify_aud": False}
         )
 
         return {

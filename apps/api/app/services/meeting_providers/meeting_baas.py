@@ -7,7 +7,6 @@ settings = get_settings()
 
 
 class MeetingBaasProvider(MeetingProvider):
-
     def __init__(self):
         self.base_url = settings.meeting_baas_base_url
         self.api_key = settings.meeting_baas_api_key
@@ -19,7 +18,9 @@ class MeetingBaasProvider(MeetingProvider):
             "Content-Type": "application/json",
         }
 
-    async def join(self, meeting_url: str, bot_name: str, language_code: str = "en") -> dict:
+    async def join(
+        self, meeting_url: str, bot_name: str, language_code: str = "en"
+    ) -> dict:
         missing = []
         if not self.api_key:
             missing.append("API key")
@@ -82,13 +83,16 @@ class MeetingBaasProvider(MeetingProvider):
                     detail=f"Could not reach Meeting BaaS: {type(exc).__name__}",
                 ) from exc
 
-   
     async def leave(self, bot_id: str) -> None:
         if not bot_id:
-            raise HTTPException(status_code=400, detail="Missing bot_id for leaving the meeting")
+            raise HTTPException(
+                status_code=400, detail="Missing bot_id for leaving the meeting"
+            )
         try:
             # Remove Content-Type from headers if present
-            headers = {k: v for k, v in self.headers.items() if k.lower() != "content-type"}
+            headers = {
+                k: v for k, v in self.headers.items() if k.lower() != "content-type"
+            }
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/v2/bots/{bot_id}/leave",
@@ -107,24 +111,30 @@ class MeetingBaasProvider(MeetingProvider):
                         if (
                             isinstance(error_json, dict)
                             and error_json.get("code") == "FST_ERR_BOT_STATUS"
-                            and "completed" in str(error_json.get("message", "")).lower()
-                            and "operation not permitted" in str(error_json.get("message", "")).lower()
+                            and "completed"
+                            in str(error_json.get("message", "")).lower()
+                            and "operation not permitted"
+                            in str(error_json.get("message", "")).lower()
                         ):
                             # Raise a special error that the meeting has already completed
                             raise HTTPException(
                                 status_code=409,
-                                detail="Meeting bot is already completed; cannot leave"
+                                detail="Meeting bot is already completed; cannot leave",
                             )
                     raise HTTPException(
                         status_code=502,
-                        detail=f"Meeting BaaS error {response.status_code}: {response.text}"
+                        detail=f"Meeting BaaS error {response.status_code}: {response.text}",
                     )
         except httpx.RequestError as exc:
-            raise HTTPException(status_code=502, detail=f"Meeting BaaS connection error: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"Meeting BaaS connection error: {exc}"
+            ) from exc
 
     async def get_transcript(self, bot_id: str) -> dict:
         if not bot_id:
-            raise HTTPException(status_code=400, detail="Missing bot_id for getting transcript")
+            raise HTTPException(
+                status_code=400, detail="Missing bot_id for getting transcript"
+            )
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -135,7 +145,7 @@ class MeetingBaasProvider(MeetingProvider):
                 if not response.is_success:
                     raise HTTPException(
                         status_code=502,
-                        detail=f"Meeting BaaS error {response.status_code}: {response.text}"
+                        detail=f"Meeting BaaS error {response.status_code}: {response.text}",
                     )
                 data = response.json()
                 return {
@@ -144,4 +154,6 @@ class MeetingBaasProvider(MeetingProvider):
                     "speakers": data.get("speakers", []),
                 }
         except httpx.RequestError as exc:
-            raise HTTPException(status_code=502, detail=f"Meeting BaaS connection error: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"Meeting BaaS connection error: {exc}"
+            ) from exc

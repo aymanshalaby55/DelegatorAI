@@ -3,6 +3,7 @@ import requests
 from fastapi import HTTPException, status
 import jwt
 
+
 @lru_cache(maxsize=10)
 def fetch_jwks(supabase_url: str) -> dict:
     """Fetch and cache JWKS from Supabase — only called once"""

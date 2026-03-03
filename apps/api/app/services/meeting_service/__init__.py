@@ -1,2 +1,1 @@
 """Meeting service package."""
-

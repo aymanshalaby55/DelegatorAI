@@ -1,6 +1,7 @@
 from app.services.meeting_providers.meeting_baas import MeetingBaasProvider
 from app.services.meeting_providers.base import MeetingProvider
 
+
 class MeetingProviderFactory:
     _providers = {
         "meeting_baas": MeetingBaasProvider,

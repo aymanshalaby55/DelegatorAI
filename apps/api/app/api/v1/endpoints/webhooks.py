@@ -16,9 +16,7 @@ settings = get_settings()
 def verify_signature(payload: bytes, signature: str) -> bool:
     """Verify the webhook is actually from Meeting BaaS"""
     expected = hmac.new(
-        settings.meeting_baas_webhook_secret.encode(),
-        payload,
-        hashlib.sha256
+        settings.meeting_baas_webhook_secret.encode(), payload, hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(expected, signature)
 
