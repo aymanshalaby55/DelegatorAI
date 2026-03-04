@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev:web": "npm run dev --workspace=apps/web",
-    "dev:api": "cd apps/api/app && uv run uvicorn main:app --reload --port 4040",
+    "dev:api": "cd apps/api/app && uv run uvicorn main:app --reload --port 8000",
     "dev": "tmux new-session \\; send-keys 'npm run dev:web' Enter \\; split-window -h \\; send-keys 'npm run dev:api' Enter",
     "prepare": "husky"
   },

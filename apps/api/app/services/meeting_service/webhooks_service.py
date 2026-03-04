@@ -1,6 +1,6 @@
-from app.db.supabase.client import CreateSupabaseClient
+from app.db.supabase.client import get_supabase_client
 
-supabase = CreateSupabaseClient()
+supabase = get_supabase_client()
 
 
 async def handle_bot_joined(event: dict):
@@ -44,13 +44,6 @@ async def handle_transcript_ready(event: dict):
         .eq("bot_id", bot_id)
         .execute()
     )
-
-    if meeting.data:
-        meeting_id = meeting.data[0]["id"]
-        # Trigger AI summary as a background task
-        from app.tasks.meeting_tasks import process_transcript
-
-        process_transcript.delay(meeting_id, transcript)
 
 
 async def handle_recording_ready(event: dict):

@@ -3,7 +3,7 @@ from app.api.deps import get_current_user
 
 router = APIRouter()
 
-
+#just for testing
 @router.get("/me")
 async def get_me(user: dict = Depends(get_current_user)):
     return {

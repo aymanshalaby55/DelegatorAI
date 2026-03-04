@@ -1,11 +1,23 @@
 {
   "files.exclude": {
     "**/__init__.py": true,
-    "**/__pycache__": true,
+    "**/__pycache__": true
   },
   "explorer.fileNesting.enabled": true,
   "explorer.compactFolders": false,
   "explorer.fileNesting.patterns": {
     "__init__.py": "${capture}.py"
-  }
+  },
+  "remote.portsAttributes": {
+    "8000": {
+      "label": "Backend",
+      "onAutoForward": "openBrowserOnce",
+      // "previewUrl": "/api/v1/docs"
+    },
+    "3000": {
+      "label": "Frontend",
+      "onAutoForward": "openBrowserOnce"
+    }
+  },
+  "remote.autoForwardPorts": true
 }

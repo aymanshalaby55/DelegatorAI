@@ -21,6 +21,10 @@ class MeetingBaasProvider(MeetingProvider):
     async def join(
         self, meeting_url: str, bot_name: str, language_code: str = "en"
     ) -> dict:
+        """
+        Sends a request to Meeting BaaS to join a meeting as a bot.
+        Returns the parsed JSON response from Meeting BaaS, which should contain the bot/session details.
+        """
         missing = []
         if not self.api_key:
             missing.append("API key")
@@ -35,6 +39,7 @@ class MeetingBaasProvider(MeetingProvider):
             "meeting_url": meeting_url,
             "bot_name": bot_name,
             "recording_mode": "speaker_view",
+            "transcription_enabled": True,
             "transcription_config": {
                 "provider": "gladia",
                 "custom_params": {
@@ -61,7 +66,7 @@ class MeetingBaasProvider(MeetingProvider):
                     timeout=30,
                 )
                 response.raise_for_status()
-
+                return response.json()
             except httpx.HTTPStatusError as exc:
                 raise HTTPException(
                     status_code=exc.response.status_code,  # don't hide the real code
