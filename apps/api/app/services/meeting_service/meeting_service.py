@@ -27,10 +27,7 @@ class MeetingService:
 
     async def get_user_meetings(self, user_id: str) -> ApiResponse:
         result = await (
-            self.supabase.table("meetings")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            self.supabase.table("meetings").select("*").eq("user_id", user_id).execute()
         )
         return success_response("Meetings fetched successfully", data=result.data)
 
@@ -102,7 +99,9 @@ class MeetingService:
                     .eq("id", meeting_id)
                     .execute()
                 )
-                return success_response("Meeting already completed or left, marked as left")
+                return success_response(
+                    "Meeting already completed or left, marked as left"
+                )
 
             raise HTTPException(
                 status_code=409, detail=f"Failed to leave meeting: {msg}"
