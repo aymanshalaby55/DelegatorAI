@@ -1,11 +1,13 @@
-import logging
 import json
+import logging
 from typing import Optional
+
 import httpx
-from app.core.config import get_settings
-from fastapi import APIRouter, Request, HTTPException
-from app.db.supabase.client import get_supabase_client
+from fastapi import APIRouter, HTTPException, Request
 from svix.webhooks import Webhook, WebhookVerificationError
+
+from app.core.config import get_settings
+from app.db.supabase.client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -125,7 +127,6 @@ async def _fetch_and_store_transcript(meeting_id: str, transcript_url: str):
                         f"Failed to decode stringified transcript response: {e}"
                     )
 
-            # Unwrap "result" wrapper (structure: { bot_id, result: { utterances: [...] } })
             if isinstance(transcript_json, dict) and "result" in transcript_json:
                 transcript_json = transcript_json["result"]
 

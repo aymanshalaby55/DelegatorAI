@@ -1,11 +1,11 @@
-from supabase import AsyncClient
 from fastapi import Depends, HTTPException
+from supabase import AsyncClient
 
-from app.db.supabase.client import get_supabase_client
 from app.core.config import Settings, get_settings
+from app.db.supabase.client import get_supabase_client
 from app.models.ApiResponse import ApiResponse, success_response
-from app.services.meeting_providers.factory import MeetingProviderFactory
 from app.models.meetings.JoinMeetingRequest import JoinMeetingRequest
+from app.services.meeting_providers.factory import MeetingProviderFactory
 
 
 class MeetingService:

@@ -1,14 +1,12 @@
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.exceptions import HTTPException as FastAPIHTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import router as v1_router
-from app.core.config import get_settings
 
 v1_app = FastAPI(title="API v1", version="1.0.0")
 v1_app.include_router(v1_router)
-
 
 
 @v1_app.exception_handler(RequestValidationError)
@@ -19,9 +17,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     serializable_errors = [
         {
-            **{k: str(v) if not isinstance(v, (str, int, float, bool, list, dict, type(None))) else v
-               for k, v in error.items()
-               if k != "ctx"} 
+            **{
+                k: (
+                    str(v)
+                    if not isinstance(
+                        v, (str, int, float, bool, list, dict, type(None))
+                    )
+                    else v
+                )
+                for k, v in error.items()
+                if k != "ctx"
+            }
         }
         for error in exc.errors()
     ]
@@ -35,6 +41,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "errors": serializable_errors,
         },
     )
+
 
 @v1_app.exception_handler(FastAPIHTTPException)
 async def http_exception_handler(request: Request, exc: FastAPIHTTPException):
@@ -62,7 +69,6 @@ async def general_exception_handler(request: Request, exc: Exception):
             "errors": str(exc),
         },
     )
-
 
 
 app = FastAPI(docs_url=None, redoc_url=None)

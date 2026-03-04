@@ -19,5 +19,13 @@
       "onAutoForward": "openBrowserOnce"
     }
   },
-  "remote.autoForwardPorts": true
+  "remote.autoForwardPorts": true,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  }
 }

@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from supabase import AsyncClient, acreate_client
+
 from app.core.config import get_settings
 
 _supabase_client: AsyncClient | None = None

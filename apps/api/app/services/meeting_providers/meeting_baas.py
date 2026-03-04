@@ -1,7 +1,8 @@
 import httpx
 from fastapi import HTTPException
-from app.services.meeting_providers.base import MeetingProvider
+
 from app.core.config import get_settings
+from app.services.meeting_providers.base import MeetingProvider
 
 settings = get_settings()
 

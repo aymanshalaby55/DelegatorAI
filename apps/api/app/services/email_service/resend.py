@@ -1,7 +1,7 @@
 import resend
-from app.services.email_service.email_provider import EmailProvider
-from app.core.config import get_settings
 
+from app.core.config import get_settings
+from app.services.email_service.email_provider import EmailProvider
 
 settings = get_settings()
 resend.api_key = settings.resend_api_key

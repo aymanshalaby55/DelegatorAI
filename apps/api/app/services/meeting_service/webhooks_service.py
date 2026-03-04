@@ -33,7 +33,7 @@ async def handle_transcript_ready(event: dict):
     transcript = event["data"]["transcript"]
 
     # Save transcript to DB
-    meeting = (
+    await (
         supabase.table("meetings")
         .update(
             {

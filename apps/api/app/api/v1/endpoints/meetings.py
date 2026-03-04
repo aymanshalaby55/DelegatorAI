@@ -1,16 +1,16 @@
 # app/routers/meetings.py
 from fastapi import APIRouter, Depends
 
-from app.models.meetings.JoinMeetingRequest import JoinMeetingRequest
 from app.api.deps import get_current_user
 from app.models.ApiResponse import ApiResponse
-
+from app.models.meetings.JoinMeetingRequest import JoinMeetingRequest
 from app.services.meeting_service.meeting_service import (
     MeetingService,
     get_meeting_service,
 )
 
 router = APIRouter(tags=["meetings"])
+
 
 @router.get("/", response_model=ApiResponse)
 async def get_meetings(

@@ -1,7 +1,8 @@
 from functools import lru_cache
+
+import jwt
 import requests
 from fastapi import HTTPException, status
-import jwt
 
 
 @lru_cache(maxsize=10)

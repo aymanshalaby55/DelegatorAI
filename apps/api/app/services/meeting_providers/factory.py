@@ -1,5 +1,5 @@
-from app.services.meeting_providers.meeting_baas import MeetingBaasProvider
 from app.services.meeting_providers.base import MeetingProvider
+from app.services.meeting_providers.meeting_baas import MeetingBaasProvider
 
 
 class MeetingProviderFactory:

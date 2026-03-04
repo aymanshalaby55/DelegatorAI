@@ -1,18 +1,17 @@
-from pydantic import AnyHttpUrl, BaseModel, Field, HttpUrl, field_validator
 from typing import Optional
+
+from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
 
 
 class JoinMeetingRequest(BaseModel):
     meeting_url: AnyHttpUrl = Field(
         ...,
         description="Must be a Google Meet, Zoom, or Teams URL",
-        example="https://meet.google.com/abc-defg-hij"
+        example="https://meet.google.com/abc-defg-hij",
     )
     title: Optional[str] = Field(
-        None,
-        description="Optional meeting title",
-        example="Team Standup"
-    ) 
+        None, description="Optional meeting title", example="Team Standup"
+    )
 
     @field_validator("meeting_url")
     @classmethod
