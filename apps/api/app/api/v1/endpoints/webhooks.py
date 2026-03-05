@@ -48,7 +48,9 @@ async def _get_payload(request: Request) -> dict:
 
 async def _find_meeting(supabase, bot_id: str):
     try:
-        result = await supabase.table("meetings").select("*").eq("bot_id", bot_id).execute()
+        result = (
+            await supabase.table("meetings").select("*").eq("bot_id", bot_id).execute()
+        )
         if result.data:
             return result.data[0]
     except Exception as e:
@@ -154,9 +156,12 @@ async def _fetch_and_store_transcript(supabase, meeting_id: str, transcript_url:
 
     try:
         if transcript_text:
-            await supabase.table("meetings").update({"transcript": transcript_text}).eq(
-                "id", meeting_id
-            ).execute()
+            await (
+                supabase.table("meetings")
+                .update({"transcript": transcript_text})
+                .eq("id", meeting_id)
+                .execute()
+            )
             logger.info(f"Stored transcript for meeting {meeting_id}")
         else:
             logger.warning(f"No transcript text extracted for meeting {meeting_id}")
