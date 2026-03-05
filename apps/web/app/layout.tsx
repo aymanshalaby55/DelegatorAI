@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
+import QueryProvider from "@/providers/query-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -30,7 +31,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground antialiased relative`}
       >
-        <div className="relative z-1">{children}</div>
+        <QueryProvider>
+          <div className="relative z-1">{children}</div>
+        </QueryProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

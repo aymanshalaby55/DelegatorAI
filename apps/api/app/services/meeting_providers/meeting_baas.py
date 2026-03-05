@@ -95,7 +95,6 @@ class MeetingBaasProvider(MeetingProvider):
                 status_code=400, detail="Missing bot_id for leaving the meeting"
             )
         try:
-            # Remove Content-Type from headers if present
             headers = {
                 k: v for k, v in self.headers.items() if k.lower() != "content-type"
             }
@@ -105,13 +104,10 @@ class MeetingBaasProvider(MeetingProvider):
                     headers=headers,
                     timeout=15,
                 )
-                # Check normal error case
                 if response.status_code != 200:
-                    # Specifically handle status 409 with FST_ERR_BOT_STATUS and completed state
                     if response.status_code == 409:
                         try:
                             error_json = response.json()
-                            # Handles both cases: text body is already a dict or is JSON
                         except Exception:
                             error_json = {}
                         if (
@@ -122,7 +118,6 @@ class MeetingBaasProvider(MeetingProvider):
                             and "operation not permitted"
                             in str(error_json.get("message", "")).lower()
                         ):
-                            # Raise a special error that the meeting has already completed
                             raise HTTPException(
                                 status_code=409,
                                 detail="Meeting bot is already completed; cannot leave",

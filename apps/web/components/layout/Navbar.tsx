@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import LogoImg from "@/public/logo.jpg";
+import { Logo } from "@/components/ui/Logo";
 import toast from "react-hot-toast";
 
 const navItems = [
@@ -30,12 +31,9 @@ const Navbar = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
+      // Print access token
       if (session?.access_token) {
-        console.log("User token:", session.access_token);
-      } else {
-        console.log("No user token found.");
+        console.log("Access token:", session.access_token);
       }
     });
 
@@ -43,6 +41,10 @@ const Navbar = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      // Print access token on auth state change
+      if (session?.access_token) {
+        console.log("Access token (onAuthStateChange):", session.access_token);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -82,41 +84,25 @@ const Navbar = () => {
     }
   };
 
-  const handleLogin = () => {
-    router.push("/login");
-  };
-
-  const handleGetStarted = () => {
-    router.push("/login");
-  };
+  const handleLogin = () => router.push("/login");
+  const handleGetStarted = () => router.push("/login");
+  const handleDashboard = () => router.push("/dashboard");
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/50 backdrop-blur-sm">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-        {/* Desktop: Logo + Navigation */}
-        <div className="hidden lg:flex items-center gap-10 xl:gap-14">
-          <Link href="/" className="flex items-center gap-2">
-            {/* Logo: perfectly circular & flush, as in image */}
-            <Image
-              src={LogoImg}
-              alt="Meeting Delegator Logo"
-              width={62}
-              height={62}
-              quality={100}
-              className="rounded-full object-cover h-10 w-10 border-none"
-              priority={true}
-            />
-            <span className="font-bold text-xl text-white font-sans whitespace-nowrap">
-              Meeting Delegator
-            </span>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl shadow-sm border-b border-border">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4 sm:px-8 max-w-7xl">
+        {/* Left: Logo */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="hidden lg:flex items-center gap-2">
+            <Logo size={38} text={true} />
           </Link>
-
-          <div className="flex items-center gap-2 border-l border-white/10 pl-10">
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-2.5">
             {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
-                className="text-sm font-semibold text-white/90 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-200"
+                className="text-sm font-medium text-muted-foreground px-2.5 py-1.5 rounded-md hover:text-foreground hover:bg-muted transition-colors"
               >
                 {item.label}
               </a>
@@ -129,75 +115,79 @@ const Navbar = () => {
           <Image
             src={LogoImg}
             alt="Meeting Delegator Logo"
-            width={32}
-            height={32}
-            quality={100}
-            className="rounded-full object-cover h-8 w-8 border-none"
-            priority={true}
+            width={34}
+            height={34}
+            priority
+            className="rounded-full object-cover h-9 w-9 border border-border bg-muted"
           />
-          <span className="font-bold text-lg sm:text-xl text-white font-sans">
+          <span className="font-bold text-base sm:text-lg text-foreground font-sans">
             Meeting Delegator
           </span>
         </Link>
 
-        {/* Desktop: User / Auth buttons */}
-        <div className="hidden lg:flex items-center gap-4">
+        {/* User/Auth for Desktop */}
+        <div className="hidden lg:flex items-center gap-5">
           {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 min-w-0">
+            <>
+              <div className="inline-flex items-center gap-3 min-w-0">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
                     alt="User avatar"
-                    className="h-9 w-9 rounded-full object-cover border border-white/20"
+                    className="h-9 w-9 rounded-full object-cover border border-border"
                     width={36}
                     height={36}
                   />
                 ) : (
-                  <div className="h-9 w-9 rounded-full bg-primary/30 border border-white/20 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">
-                      {displayName.charAt(0).toUpperCase()}
-                    </span>
+                  <div className="h-9 w-9 rounded-full bg-muted text-foreground/50 border border-border flex items-center justify-center text-sm font-bold uppercase select-none">
+                    {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="text-sm font-medium text-white/90 truncate max-w-[140px] xl:max-w-[180px]">
+                <span className="text-sm font-medium text-foreground truncate max-w-[140px] xl:max-w-[180px]">
                   {displayName}
                 </span>
               </div>
               <Button
                 size="sm"
+                className="bg-primary hover:bg-primary/90 text-white text-xs font-semibold px-4 py-2 shadow"
+                onClick={handleDashboard}
+              >
+                Dashboard
+              </Button>
+              <Button
+                size="icon"
                 variant="ghost"
-                className="text-white/80 hover:text-white hover:bg-white/10 px-3"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
                 onClick={handleSignOut}
                 aria-label="Sign out"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
               </Button>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-3 sm:gap-4">
+            <>
               <Button
                 size="sm"
-                className="bg-black/12 hover:bg-white/20 text-white border border-white/15 text-sm sm:text-base px-4 sm:px-6 h-9 sm:h-10"
+                className="bg-muted hover:bg-muted/70 text-foreground border border-border text-sm px-4 h-9"
                 onClick={handleLogin}
               >
                 Log In
               </Button>
               <Button
                 size="sm"
-                className="glow-primary text-sm sm:text-base px-5 sm:px-7 h-9 sm:h-10"
+                className="glow-primary text-sm px-5 h-9"
                 onClick={handleGetStarted}
               >
                 Get Started
               </Button>
-            </div>
+            </>
           )}
         </div>
 
         {/* Mobile menu toggle */}
         <button
-          className="lg:hidden text-white p-1 -mr-1"
-          onClick={() => setMobileOpen(!mobileOpen)}
+          className="lg:hidden text-foreground p-2 rounded-md focus:outline-none hover:bg-muted/60 transition"
+          onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X size={26} /> : <Menu size={26} />}
@@ -212,43 +202,54 @@ const Navbar = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="lg:hidden glass border-t border-white/10 overflow-hidden"
+            className="lg:hidden glass border-t border-border/50 overflow-hidden"
           >
-            <div className="flex flex-col gap-5 p-6 pt-5 pb-8">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="text-base sm:text-lg font-semibold text-white hover:text-white py-1.5 transition-colors"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {item.label}
-                </a>
-              ))}
+            <div className="flex flex-col gap-6 px-4 py-6 pt-5">
+              <div className="flex flex-col gap-2">
+                {navItems.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-base font-medium text-foreground/80 hover:text-foreground transition mb-1"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
 
               {user ? (
-                <div className="flex items-center gap-4 pt-4 mt-2 border-t border-white/10">
+                <div className="flex items-center gap-3 pt-4 mt-2 border-t border-border">
                   {avatarUrl ? (
                     <Image
                       src={avatarUrl}
                       alt="User avatar"
                       width={44}
                       height={44}
-                      className="h-11 w-11 rounded-full object-cover border border-white/20"
+                      className="h-11 w-11 rounded-full object-cover border border-border"
                     />
                   ) : (
-                    <div className="h-11 w-11 rounded-full bg-primary/30 border border-white/20 flex items-center justify-center text-lg font-semibold text-primary">
+                    <div className="h-11 w-11 rounded-full bg-muted text-foreground/50 border border-border flex items-center justify-center text-lg font-bold uppercase select-none">
                       {displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="text-white/90 font-medium truncate">
+                    <span className="text-foreground font-medium truncate text-base block">
                       {displayName}
-                    </div>
+                    </span>
                   </div>
                   <Button
+                    className="bg-primary hover:bg-primary/90 text-white text-base font-semibold px-5 py-2 shadow"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      handleDashboard();
+                    }}
+                  >
+                    Dashboard
+                  </Button>
+                  <Button
                     variant="ghost"
-                    className="text-red-300 hover:text-red-200 hover:bg-red-950/30 px-4"
+                    className="text-red-500 hover:text-red-600 hover:bg-destructive/10 transition px-4"
                     onClick={async () => {
                       setMobileOpen(false);
                       await handleSignOut();
@@ -258,9 +259,9 @@ const Navbar = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-4 pt-5 mt-2">
+                <div className="flex flex-col gap-4 pt-5 mt-2 border-t border-border">
                   <Button
-                    className="bg-white/12 hover:bg-white/20 border border-white/15 h-11 text-base font-medium"
+                    className="bg-muted hover:bg-muted/80 border border-border h-11 text-base font-medium"
                     onClick={() => {
                       setMobileOpen(false);
                       handleLogin();

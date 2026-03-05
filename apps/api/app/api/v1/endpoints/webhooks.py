@@ -3,7 +3,8 @@ import logging
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from supabase import AsyncClient
 from svix.webhooks import Webhook, WebhookVerificationError
 
 from app.core.config import get_settings
@@ -12,7 +13,6 @@ from app.db.supabase.client import get_supabase_client
 logger = logging.getLogger(__name__)
 router = APIRouter()
 settings = get_settings()
-supabase = get_supabase_client()
 
 
 def _extract_event(payload: dict):
@@ -46,9 +46,11 @@ async def _get_payload(request: Request) -> dict:
     return await request.json()
 
 
-def _find_meeting(supabase, bot_id: str):
+async def _find_meeting(supabase, bot_id: str):
     try:
-        result = supabase.table("meetings").select("*").eq("bot_id", bot_id).execute()
+        result = (
+            await supabase.table("meetings").select("*").eq("bot_id", bot_id).execute()
+        )
         if result.data:
             return result.data[0]
     except Exception as e:
@@ -95,7 +97,7 @@ def _format_utterances(utterances: list) -> Optional[str]:
     return "\n".join(lines) if lines else None
 
 
-async def _fetch_and_store_transcript(meeting_id: str, transcript_url: str):
+async def _fetch_and_store_transcript(supabase, meeting_id: str, transcript_url: str):
     if not transcript_url:
         logger.warning(f"No transcript URL provided for meeting {meeting_id}")
         return
@@ -154,9 +156,12 @@ async def _fetch_and_store_transcript(meeting_id: str, transcript_url: str):
 
     try:
         if transcript_text:
-            supabase.table("meetings").update({"transcript": transcript_text}).eq(
-                "id", meeting_id
-            ).execute()
+            await (
+                supabase.table("meetings")
+                .update({"transcript": transcript_text})
+                .eq("id", meeting_id)
+                .execute()
+            )
             logger.info(f"Stored transcript for meeting {meeting_id}")
         else:
             logger.warning(f"No transcript text extracted for meeting {meeting_id}")
@@ -173,20 +178,23 @@ async def _update_meeting(
         transcript_url = data.get("transcription")
         if transcript_url:
             print(transcript_url)
-            await _fetch_and_store_transcript(meeting_id, transcript_url)
+            await _fetch_and_store_transcript(supabase, meeting_id, transcript_url)
 
-    supabase.table("meetings").update(update_data).eq("id", meeting_id).execute()
+    await supabase.table("meetings").update(update_data).eq("id", meeting_id).execute()
 
 
 @router.post("/meeting-baas")
-async def meeting_baas_webhook(request: Request):
+async def meeting_baas_webhook(
+    request: Request,
+    supabase: AsyncClient = Depends(get_supabase_client),
+):
     payload = await _get_payload(request)
     event_type, data, bot_id = _extract_event(payload)
 
     if not bot_id:
         return {"status": "ignored", "reason": "no bot_id"}
 
-    meeting = _find_meeting(supabase, bot_id)
+    meeting = await _find_meeting(supabase, bot_id)
     if not meeting:
         return {"status": "ignored", "reason": "meeting not found"}
 

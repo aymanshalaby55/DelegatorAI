@@ -16,17 +16,24 @@
     "dev:web": "npm run dev --workspace=apps/web",
     "dev:api": "cd apps/api/app && uv run uvicorn main:app --reload --port 8000",
     "dev": "tmux new-session \\; send-keys 'npm run dev:web' Enter \\; split-window -h \\; send-keys 'npm run dev:api' Enter",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate:types": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o types/api.generated.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
     "concurrently": "^8.0.0",
     "eslint": "^10.0.2",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.1"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7"
+    "lint-staged": "^16.2.7",
+    "react-hook-form": "^7.71.2",
+    "zod": "^4.3.6"
   }
 }
