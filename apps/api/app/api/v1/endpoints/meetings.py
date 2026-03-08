@@ -2,13 +2,19 @@
 import uuid
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 
 from app.api.deps import get_current_user
 from app.models.ApiResponse import ApiResponse
+from app.models.meetings.GenerateSummaryRequest import GenerateSummaryRequest
 from app.models.meetings.JoinMeetingRequest import JoinMeetingRequest
 from app.services.meeting_service.meeting_service import (
     MeetingService,
     get_meeting_service,
+)
+from app.services.summary_service.summary_service import (
+    SummaryService,
+    get_summary_service,
 )
 
 router = APIRouter(tags=["meetings"])
@@ -56,3 +62,20 @@ async def get_transcript(
     service: MeetingService = Depends(get_meeting_service),
 ):
     return await service.get_transcript(meeting_id, user["id"])
+
+
+@router.post("/{meeting_id}/summary/generate")
+async def generate_summary(
+    meeting_id: uuid.UUID,
+    body: GenerateSummaryRequest,
+    user: dict = Depends(get_current_user),
+    service: SummaryService = Depends(get_summary_service),
+):
+    return StreamingResponse(
+        service.generate_summary_stream(meeting_id=str(meeting_id), user_id=user["id"], request=body),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )

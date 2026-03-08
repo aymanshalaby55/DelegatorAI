@@ -1,6 +1,7 @@
 // hooks/use-meetings.ts
 "use client";
 
+import { useCallback, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
@@ -9,8 +10,13 @@ import {
   joinMeeting,
   leaveMeeting,
   getMeetingTranscript,
+  streamGenerateSummary,
 } from "@/services/meeting-service";
-import type { JoinMeetingRequest } from "@/types/meeting";
+import type {
+  JoinMeetingRequest,
+  SummaryFormat,
+  SummaryLength,
+} from "@/types/meeting";
 
 export const meetingKeys = {
   all: ["meetings"] as const,
@@ -71,4 +77,57 @@ export function useMeetingTranscript(meetingId: string) {
     select: (res) => res.data,
     enabled: !!meetingId,
   });
+}
+
+export function useGenerateSummary(meetingId: string) {
+  const queryClient = useQueryClient();
+  const [streamedText, setStreamedText] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const generate = useCallback(
+    async (length: SummaryLength, format: SummaryFormat) => {
+      // Cancel any previous in-flight stream
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
+
+      setStreamedText("");
+      setError(null);
+      setIsStreaming(true);
+
+      try {
+        for await (const chunk of streamGenerateSummary(
+          meetingId,
+          length,
+          format,
+        )) {
+          setStreamedText((prev) => prev + chunk);
+        }
+        // Refresh the meeting data so meeting.summary is updated
+        queryClient.invalidateQueries({
+          queryKey: meetingKeys.byId(meetingId),
+        });
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          const message =
+            err instanceof Error ? err.message : "Failed to generate summary";
+          setError(message);
+          toast.error(message);
+        }
+      } finally {
+        setIsStreaming(false);
+      }
+    },
+    [meetingId, queryClient],
+  );
+
+  const reset = useCallback(() => {
+    abortRef.current?.abort();
+    setStreamedText("");
+    setError(null);
+    setIsStreaming(false);
+  }, []);
+
+  return { generate, reset, streamedText, isStreaming, error };
 }
