@@ -27,7 +27,11 @@ class MeetingService:
 
     async def get_user_meetings(self, user_id: str) -> ApiResponse:
         result = await (
-            self.supabase.table("meetings").select("*").filter("user_id", "eq", user_id).order("created_at", desc=False).execute()
+            self.supabase.table("meetings")
+            .select("*")
+            .filter("user_id", "eq", user_id)
+            .order("created_at", desc=False)
+            .execute()
         )
         return success_response("Meetings fetched successfully", data=result.data)
 

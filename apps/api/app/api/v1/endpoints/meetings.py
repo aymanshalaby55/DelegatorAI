@@ -72,7 +72,9 @@ async def generate_summary(
     service: SummaryService = Depends(get_summary_service),
 ):
     return StreamingResponse(
-        service.generate_summary_stream(meeting_id=str(meeting_id), user_id=user["id"], request=body),
+        service.generate_summary_stream(
+            meeting_id=str(meeting_id), user_id=user["id"], request=body
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
