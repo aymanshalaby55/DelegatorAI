@@ -1,8 +1,7 @@
 import httpx
-from fastapi import HTTPException
-
 from app.core.config import get_settings
 from app.services.meeting_providers.base import MeetingProvider
+from fastapi import HTTPException
 
 settings = get_settings()
 
@@ -44,13 +43,15 @@ class MeetingBaasProvider(MeetingProvider):
             "transcription_config": {
                 "provider": "gladia",
                 "custom_params": {
+                    "summarization": True,
+                    "summarization_config": {"type": "bullet_points"},
+                    "language_config": {
+                        "languages": ["en", "ar"],
+                        "code_switching": True,
+                    },
                     "translation": True,
                     "translation_config": {
-                        "target_languages": [language_code],
-                        "model": "enhanced",
-                        "match_original_utterances": True,
-                        "lipsync": True,
-                        "context_adaptation": True,
+                        "target_languages": ["en"],
                     },
                 },
             },

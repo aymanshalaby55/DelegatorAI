@@ -37,14 +37,21 @@ function normalizeStatus(status: string | null | undefined): string {
   return status.toLowerCase().replace(" ", "_");
 }
 
-export function MeetingCard({ meeting }: { meeting: Meeting }) {
+interface MeetingCardProps {
+  meeting: Meeting;
+  onClick: () => void;
+}
+
+export function MeetingCard({ meeting, onClick }: MeetingCardProps) {
   const status = normalizeStatus(meeting.status);
   const platform = detectPlatform(meeting.meeting_url);
-
   const isMeetingLinkDisabled = status === "completed";
 
   return (
-    <div className="glass rounded-xl p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors cursor-pointer group">
+    <div
+      onClick={onClick}
+      className="glass rounded-xl p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors cursor-pointer group"
+    >
       {/* Platform icon */}
       <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
         <PlatformIcon platform={platform} className="h-6 w-6" />
@@ -85,11 +92,12 @@ export function MeetingCard({ meeting }: { meeting: Meeting }) {
           size="icon"
           className="h-8 w-8 text-muted-foreground"
           disabled={isMeetingLinkDisabled}
-          onClick={() =>
-            !isMeetingLinkDisabled &&
-            meeting.meeting_url &&
-            window.open(meeting.meeting_url, "_blank")
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isMeetingLinkDisabled && meeting.meeting_url) {
+              window.open(meeting.meeting_url, "_blank");
+            }
+          }}
         >
           <ExternalLink className="h-4 w-4" />
         </Button>
@@ -97,6 +105,7 @@ export function MeetingCard({ meeting }: { meeting: Meeting }) {
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground"
+          onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="h-4 w-4" />
         </Button>

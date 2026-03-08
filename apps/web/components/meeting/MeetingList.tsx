@@ -8,9 +8,16 @@ type Props = {
   filter: string;
   isLoading?: boolean;
   error?: string | null;
+  onMeetingClick: (id: string) => void;
 };
 
-export function MeetingList({ meetings, filter, isLoading, error }: Props) {
+export function MeetingList({
+  meetings,
+  filter,
+  isLoading,
+  error,
+  onMeetingClick,
+}: Props) {
   if (isLoading) {
     return (
       <div className="grid gap-3">
@@ -34,7 +41,11 @@ export function MeetingList({ meetings, filter, isLoading, error }: Props) {
   return (
     <div className="grid gap-3">
       {filtered.map((meeting) => (
-        <MeetingCard key={meeting.id} meeting={meeting} />
+        <MeetingCard
+          key={meeting.id}
+          meeting={meeting}
+          onClick={() => onMeetingClick(meeting.id)}
+        />
       ))}
       {filtered.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-10">

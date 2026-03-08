@@ -21,3 +21,14 @@ export type JoinMeetingRequest = {
 export type MeetingResponse = {
   meeting: Meeting;
 };
+
+export type MeetingStatus = "COMPLETED" | "IN_PROGRESS" | "PENDING" | "FAILED";
+
+export type SummaryLength = "short" | "medium" | "detailed";
+export type SummaryFormat = "bullets" | "paragraph";
+
+export interface TranscriptLine {
+  speaker: string | null;
+  text: string;
+  raw: string;
+}

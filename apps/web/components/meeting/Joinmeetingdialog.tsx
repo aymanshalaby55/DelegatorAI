@@ -23,11 +23,12 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useJoinMeeting } from "@/hooks/use-meeting";
+import { useJoinMeeting } from "@/hooks/useMeeting";
 
 const microsoftUrlRegex =
   /^https:\/\/teams\.microsoft\.com\/l\/meetup-join\/.+$/i;
-const googleUrlRegex = /^https:\/\/meet\.google\.com\/[a-z0-9-]+$/i;
+const googleUrlRegex =
+  /^https:\/\/meet\.google\.com\/[a-z0-9-]+(\/[a-z0-9-]+)?(\?.*)?$/i;
 
 const schema = z.object({
   title: z.string().optional(),

@@ -1,4 +1,6 @@
 # app/routers/meetings.py
+import uuid
+
 from fastapi import APIRouter, Depends
 
 from app.api.deps import get_current_user
@@ -22,7 +24,7 @@ async def get_meetings(
 
 @router.get("/{meeting_id}", response_model=ApiResponse)
 async def get_meeting(
-    meeting_id: str,
+    meeting_id: uuid.UUID,
     user: dict = Depends(get_current_user),
     service: MeetingService = Depends(get_meeting_service),
 ):
@@ -40,7 +42,7 @@ async def join_meeting(
 
 @router.post("/{meeting_id}/leave", response_model=ApiResponse)
 async def leave_meeting(
-    meeting_id: str,
+    meeting_id: uuid.UUID,
     user: dict = Depends(get_current_user),
     service: MeetingService = Depends(get_meeting_service),
 ):
@@ -49,7 +51,7 @@ async def leave_meeting(
 
 @router.get("/{meeting_id}/transcript", response_model=ApiResponse)
 async def get_transcript(
-    meeting_id: str,
+    meeting_id: uuid.UUID,
     user: dict = Depends(get_current_user),
     service: MeetingService = Depends(get_meeting_service),
 ):

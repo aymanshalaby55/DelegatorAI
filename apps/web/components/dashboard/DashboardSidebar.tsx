@@ -12,6 +12,8 @@ import {
   User,
   MoreHorizontal,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useState, useEffect } from "react";
@@ -34,20 +36,22 @@ const DashboardSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const supabase = createClient();
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -75,22 +79,21 @@ const DashboardSidebar = () => {
       toast.dismiss("logout");
       toast.success("Logged out successfully.");
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.dismiss("logout");
-        toast.error("Error during logout: " + error.message);
-      } else {
-        toast.dismiss("logout");
-        toast.error("Error during logout: Unknown error");
-      }
+      toast.dismiss("logout");
+      toast.error(
+        "Error during logout: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
     }
   };
 
-  return (
-    <aside className="w-56 border-r border-border flex flex-col justify-between glass-strong min-h-screen left-0 top-0 z-30">
+  const NavContent = () => (
+    <>
       <div>
         <Link
           href="/"
           className="flex items-center gap-2 px-4 py-5 border-b border-border"
+          onClick={() => setMobileOpen(false)}
         >
           <Logo size={32} />
         </Link>
@@ -117,8 +120,9 @@ const DashboardSidebar = () => {
           })}
         </nav>
       </div>
+
       <div className="p-3 border-t border-border">
-        <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground truncate">
+        <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground">
           {user ? (
             <>
               {avatarUrl ? (
@@ -130,7 +134,7 @@ const DashboardSidebar = () => {
                   height={28}
                 />
               ) : (
-                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -146,7 +150,7 @@ const DashboardSidebar = () => {
             </>
           ) : (
             <>
-              <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+              <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                 ?
               </div>
               <span className="truncate max-w-[100px]">Not logged in</span>
@@ -161,7 +165,51 @@ const DashboardSidebar = () => {
           )}
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── Desktop sidebar (md+) ── */}
+      <aside className="hidden md:flex w-56 border-r border-border flex-col justify-between glass-strong min-h-screen shrink-0">
+        <NavContent />
+      </aside>
+
+      {/* ── Mobile top bar ── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
+        <Link href="/">
+          <Logo size={28} />
+        </Link>
+        <button
+          onClick={() => setMobileOpen((o) => !o)}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+
+      {/* ── Mobile drawer backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile drawer ── */}
+      <aside
+        className={`md:hidden fixed top-0 left-0 z-40 h-full w-64 flex flex-col justify-between glass-strong border-r border-border transform transition-transform duration-200 ease-in-out ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <NavContent />
+      </aside>
+    </>
   );
 };
 
