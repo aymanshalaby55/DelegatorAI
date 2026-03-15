@@ -31,7 +31,6 @@ class GitHubProvider(IntegrationProvider, ActionableProvider):
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-
     def get_oauth_url(self, state: str) -> str:
         params = {
             "client_id": self.settings.github_client_id,
