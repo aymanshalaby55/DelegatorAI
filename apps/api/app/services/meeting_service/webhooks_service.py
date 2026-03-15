@@ -1,58 +1,54 @@
-from app.db.supabase.client import get_supabase_client
+import logging
+from supabase import AsyncClient
+from app.utils.transcript import fetch_and_parse_transcript
 
-supabase = get_supabase_client()
-
-
-async def handle_bot_joined(event: dict):
-    """Bot successfully joined the meeting"""
-    bot_id = event["data"]["bot_id"]
-
-    supabase.table("meetings").update(
-        {
-            "status": "active",
-            "started_at": "now()",
-        }
-    ).eq("bot_id", bot_id).execute()
+logger = logging.getLogger(__name__)
 
 
-async def handle_bot_left(event: dict):
-    """Bot left or was removed from the meeting"""
-    bot_id = event["data"]["bot_id"]
+async def find_meeting_by_bot_id(supabase: AsyncClient, bot_id: str) -> dict | None:
+    try:
+        result = (
+            await supabase.table("meetings").select("*").eq("bot_id", bot_id).execute()
+        )
+        if result.data:
+            return result.data[0]
+    except Exception as e:
+        logger.warning(f"Error querying meetings by bot_id: {e}")
+    return None
 
-    supabase.table("meetings").update(
-        {
-            "status": "completed",
-            "ended_at": "now()",
-        }
-    ).eq("bot_id", bot_id).execute()
 
+async def handle_webhook_update(
+    supabase: AsyncClient,
+    meeting_id: str,
+    event_type: str,
+    data: dict,
+    status: str,
+) -> None:
+    if event_type == "bot.completed":
+        transcript_url = data.get("transcription")
+        if transcript_url:
+            try:
+                transcript_text = await fetch_and_parse_transcript(transcript_url)
+                if transcript_text:
+                    await (
+                        supabase.table("meetings")
+                        .update({"transcript": transcript_text})
+                        .eq("id", meeting_id)
+                        .execute()
+                    )
+                    logger.info(f"Stored transcript for meeting {meeting_id}")
+                else:
+                    logger.warning(
+                        f"No transcript text extracted for meeting {meeting_id}"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Failed to fetch/store transcript for meeting {meeting_id}: {e}"
+                )
 
-async def handle_transcript_ready(event: dict):
-    """Transcript is ready — save it and trigger AI processing"""
-    bot_id = event["data"]["bot_id"]
-    transcript = event["data"]["transcript"]
-
-    # Save transcript to DB
     await (
         supabase.table("meetings")
-        .update(
-            {
-                "transcript": transcript,
-                "status": "processing",
-            }
-        )
-        .eq("bot_id", bot_id)
+        .update({"status": status})
+        .eq("id", meeting_id)
         .execute()
     )
-
-
-async def handle_recording_ready(event: dict):
-    """Recording URL is available"""
-    bot_id = event["data"]["bot_id"]
-    recording_url = event["data"]["recording_url"]
-
-    supabase.table("meetings").update(
-        {
-            "recording_url": recording_url,
-        }
-    ).eq("bot_id", bot_id).execute()

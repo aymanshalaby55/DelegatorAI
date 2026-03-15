@@ -12,7 +12,7 @@
     "8000": {
       "label": "Backend",
       "onAutoForward": "openBrowserOnce",
-      // "previewUrl": "/api/v1/docs"
+      "previewUrl": "/api/v1/docs"
     },
     "3000": {
       "label": "Frontend",

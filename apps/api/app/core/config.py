@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # CORS
-    frontend_url: str = "https://1wwmrxxr-3000.uks1.devtunnels.ms"
+    frontend_url: str = "http://localhost:3000"
 
     # Supabase
     supabase_url: str = ""
@@ -40,16 +40,18 @@ class Settings(BaseSettings):
     # GitHub
     github_client_id: str = ""
     github_client_secret: str = ""
+    # Override via GITHUB_OAUTH_REDIRECT_URI in .env for tunnels/production
     github_oauth_redirect_uri: str = (
-        "https://1wwmrxxr-3000.uks1.devtunnels.ms/auth/callback/github"
+        "http://localhost:8000/api/v1/integrations/callback/github"
     )
 
     # Slack
     slack_client_id: str = ""
     slack_client_secret: str = ""
     slack_signing_secret: str = ""
+    # Override via SLACK_OAUTH_REDIRECT_URI in .env for tunnels/production
     slack_oauth_redirect_uri: str = (
-        "https://1wwmrxxr-3000.uks1.devtunnels.ms/auth/callback/slack"
+        "http://localhost:8000/api/v1/integrations/callback/slack"
     )
 
     # Redis / Celery

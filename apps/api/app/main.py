@@ -1,10 +1,15 @@
+from app.api.v1.router import router as v1_router
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from app.services.meeting_providers.factory import MeetingProviderFactory
 
-from app.api.v1.router import router as v1_router
+
+from app.services.meeting_providers.meeting_baas import MeetingBaasProvider
+
+MeetingProviderFactory.register("meeting_baas", MeetingBaasProvider)
 
 v1_app = FastAPI(title="API v1", version="1.0.0")
 v1_app.include_router(v1_router)

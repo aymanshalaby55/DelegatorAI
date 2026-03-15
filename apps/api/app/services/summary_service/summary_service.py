@@ -1,13 +1,12 @@
 from typing import AsyncGenerator
 
-from fastapi import Depends, HTTPException
-from supabase import AsyncClient
-
 from app.core.config import Settings, get_settings
 from app.db.supabase.client import get_supabase_client
 from app.llm.factory import LLMProviderFactory
 from app.models.meetings.GenerateSummaryRequest import GenerateSummaryRequest
 from app.services.summary_service.prompts import build_summary_messages
+from fastapi import Depends, HTTPException
+from supabase import AsyncClient
 
 
 class SummaryService:
