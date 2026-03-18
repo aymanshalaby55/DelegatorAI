@@ -22,7 +22,7 @@ class GitHubProvider(IntegrationProvider, ActionableProvider):
 
     Capabilities:
     - OAuth token exchange (IntegrationProvider)
-    - Action execution: create_issue (ActionableProvider)
+    - Action execution: create_issue, list_repos (ActionableProvider)
 
     NOTE: GitHub tokens do not expire, so this provider intentionally does NOT
     implement RefreshableProvider.
@@ -83,13 +83,18 @@ class GitHubProvider(IntegrationProvider, ActionableProvider):
             return {}
 
     def supported_actions(self) -> list[str]:
-        return ["create_issue"]
+        return ["create_issue", "list_repos", "list_collaborators"]
 
     async def execute_action(
         self, action: str, token: str, payload: dict, metadata: dict
     ) -> dict:
         if action == "create_issue":
             return await self._create_issue(token, payload, metadata)
+        if action == "list_repos":
+            return await self._list_repos(token)
+        if action == "list_collaborators":
+            repo = payload.get("repo") or metadata.get("default_repo", "")
+            return await self._list_collaborators(token, repo)
         raise ValueError(
             f"Unsupported GitHub action: '{action}'. Supported: {self.supported_actions()}"
         )
@@ -112,8 +117,12 @@ class GitHubProvider(IntegrationProvider, ActionableProvider):
         if not repo:
             raise ValueError(
                 "GitHub repo is required. Set default_repo in your integration "
-                "metadata or pass it in the action payload."
+                "settings or pass it in the action payload."
             )
+
+        assignees = payload.get("assignees", [])
+        # Filter out empty strings
+        assignees = [a for a in assignees if a]
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -122,6 +131,7 @@ class GitHubProvider(IntegrationProvider, ActionableProvider):
                     "title": payload.get("title", ""),
                     "body": payload.get("body", ""),
                     "labels": payload.get("labels", []),
+                    "assignees": assignees,
                 },
                 headers={
                     "Authorization": f"Bearer {token}",
@@ -131,3 +141,64 @@ class GitHubProvider(IntegrationProvider, ActionableProvider):
             )
             response.raise_for_status()
             return response.json()
+
+    async def _list_collaborators(self, token: str, repo: str) -> dict:
+        """Return collaborators for the given repo (owner + contributors with push access)."""
+        if not repo:
+            raise ValueError(
+                "A repo is required to list collaborators. Set default_repo in your "
+                "integration settings or pass it in the payload."
+            )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{GITHUB_API_URL}/repos/{repo}/collaborators",
+                params={"per_page": 100, "affiliation": "all"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github+json",
+                },
+                timeout=15,
+            )
+            if response.status_code == 404:
+                raise ValueError(
+                    f"Repository '{repo}' not found or you don't have access."
+                )
+            response.raise_for_status()
+            collaborators = response.json()
+            return {
+                "collaborators": [
+                    {
+                        "login": c["login"],
+                        "avatar_url": c.get("avatar_url", ""),
+                        "type": c.get("type", "User"),
+                    }
+                    for c in collaborators
+                    if isinstance(c, dict) and c.get("type") != "Bot"
+                ]
+            }
+
+    async def _list_repos(self, token: str) -> dict:
+        """Return the user's repos sorted by most recently updated."""
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{GITHUB_API_URL}/user/repos",
+                params={
+                    "per_page": 50,
+                    "sort": "updated",
+                    "affiliation": "owner,collaborator",
+                },
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github+json",
+                },
+                timeout=15,
+            )
+            response.raise_for_status()
+            repos = response.json()
+            return {
+                "repos": [
+                    {"full_name": r["full_name"], "private": r["private"]}
+                    for r in repos
+                    if isinstance(r, dict)
+                ]
+            }

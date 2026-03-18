@@ -1,7 +1,7 @@
 from app.api.deps import get_current_user
 from fastapi import APIRouter, Depends
 
-from .endpoints import health, integrations, meetings, user, webhooks
+from .endpoints import health, integrations, meetings, tasks, user, webhooks
 
 public_router = APIRouter()
 public_router.include_router(health.router, prefix="/health", tags=["health"])
@@ -19,6 +19,7 @@ protected_router.include_router(meetings.router, prefix="/meetings", tags=["meet
 protected_router.include_router(
     integrations.router, prefix="/integrations", tags=["integrations"]
 )
+protected_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 
 
 router = APIRouter()

@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     github_client_secret: str = ""
     # Override via GITHUB_OAUTH_REDIRECT_URI in .env for tunnels/production
     github_oauth_redirect_uri: str = (
-        "http://localhost:8000/api/v1/integrations/callback/github"
+        "https://1wwmrxxr-8000.uks1.devtunnels.ms/api/v1/integrations/callback/github"
     )
 
     # Slack
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     slack_signing_secret: str = ""
     # Override via SLACK_OAUTH_REDIRECT_URI in .env for tunnels/production
     slack_oauth_redirect_uri: str = (
-        "http://localhost:8000/api/v1/integrations/callback/slack"
+        "https://1wwmrxxr-8000.uks1.devtunnels.ms/api/v1/integrations/callback/slack"
     )
 
     # Redis / Celery

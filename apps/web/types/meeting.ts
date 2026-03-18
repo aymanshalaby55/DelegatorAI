@@ -32,3 +32,23 @@ export interface TranscriptLine {
   text: string;
   raw: string;
 }
+
+export type TaskPriority = "high" | "medium" | "low";
+export type TaskStatus = "extracted" | "in_progress" | "done";
+
+export interface MeetingTask {
+  id: string;
+  meeting_id: string;
+  meeting_title?: string;
+  title: string;
+  description: string | null;
+  assignee_name: string | null;
+  assignee_github: string | null;
+  status: TaskStatus;
+  github_issue_url: string | null;
+  github_issue_number: number | null;
+  slack_notified_at: string | null;
+  priority: TaskPriority;
+  created_at: string;
+  updated_at: string;
+}

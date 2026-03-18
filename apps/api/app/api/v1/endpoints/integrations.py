@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from supabase import AsyncClient
 
 from app.api.deps import get_current_user
@@ -14,11 +15,17 @@ from app.models.integrations.schemas import (
     IntegrationListResponse,
 )
 from app.integrations.manager import IntegrationManager, get_integration_manager
+from app.services.token_service import TokenService
 from app.utils.oauthToken import (
     _create_state_token,
     _require_supported_provider,
     _verify_state_token,
 )
+
+
+class UpdateSettingsRequest(BaseModel):
+    metadata: dict
+
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +173,103 @@ async def oauth_callback(
         f"?status=success&provider={provider}"
     )
     return RedirectResponse(url=redirect_url)
+
+
+@router.patch("/{provider}/settings", response_model=ApiResponse)
+async def update_integration_settings(
+    provider: str,
+    body: UpdateSettingsRequest,
+    current_user: dict = Depends(get_current_user),
+    manager: IntegrationManager = Depends(get_integration_manager),
+    supabase: AsyncClient = Depends(get_supabase_client),
+) -> ApiResponse:
+    """
+    Merge the supplied metadata into the stored integration record.
+    Used to persist provider-specific settings such as default_repo (GitHub)
+    and default_channel (Slack).
+    """
+    _require_supported_provider(provider)
+
+    existing = await manager.get_integration(current_user["id"], provider)
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No active {provider} integration found. Connect it first.",
+        )
+
+    merged_metadata = {**(existing.get("metadata") or {}), **body.metadata}
+
+    token_service = TokenService(supabase)
+    await token_service.upsert(
+        user_id=current_user["id"],
+        provider=provider,
+        tokens={
+            "access_token": existing["access_token"],
+            "refresh_token": existing.get("refresh_token"),
+            "expires_at": existing.get("expires_at"),
+        },
+        metadata=merged_metadata,
+    )
+
+    return success_response(
+        f"{provider.capitalize()} settings updated successfully.",
+        {"metadata": merged_metadata},
+    )
+
+
+@router.get("/github/repos", response_model=ApiResponse)
+async def list_github_repos(
+    current_user: dict = Depends(get_current_user),
+    manager: IntegrationManager = Depends(get_integration_manager),
+) -> ApiResponse:
+    """Return the authenticated user's GitHub repositories for the repo picker."""
+    try:
+        result = await manager.execute_action(
+            user_id=current_user["id"],
+            provider_name="github",
+            action="list_repos",
+            payload={},
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return success_response("Repositories fetched", result)
+
+
+@router.get("/github/collaborators", response_model=ApiResponse)
+async def list_github_collaborators(
+    repo: str = Query(..., description="Full repo name, e.g. owner/repo"),
+    current_user: dict = Depends(get_current_user),
+    manager: IntegrationManager = Depends(get_integration_manager),
+) -> ApiResponse:
+    """Return collaborators for the given GitHub repository."""
+    try:
+        result = await manager.execute_action(
+            user_id=current_user["id"],
+            provider_name="github",
+            action="list_collaborators",
+            payload={"repo": repo},
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return success_response("Collaborators fetched", result)
+
+
+@router.get("/slack/channels", response_model=ApiResponse)
+async def list_slack_channels(
+    current_user: dict = Depends(get_current_user),
+    manager: IntegrationManager = Depends(get_integration_manager),
+) -> ApiResponse:
+    """Return the Slack channels available for the connected workspace."""
+    try:
+        result = await manager.execute_action(
+            user_id=current_user["id"],
+            provider_name="slack",
+            action="list_channels",
+            payload={},
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return success_response("Channels fetched", result)
 
 
 @router.post("/{provider}/actions/{action}", response_model=ApiResponse)

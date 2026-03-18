@@ -11,8 +11,14 @@ import {
   leaveMeeting,
   getMeetingTranscript,
   streamGenerateSummary,
+  getMeetingTasks,
+  extractMeetingTasks,
+  pushTaskToGitHub,
+  notifySlack,
+  getAllMeetingTasks,
 } from "@/services/meeting-service";
 import type {
+  MeetingTask,
   JoinMeetingRequest,
   SummaryFormat,
   SummaryLength,
@@ -22,6 +28,8 @@ export const meetingKeys = {
   all: ["meetings"] as const,
   byId: (id: string) => ["meetings", id] as const,
   transcript: (id: string) => ["meetings", id, "transcript"] as const,
+  tasks: (id: string) => ["meetings", id, "tasks"] as const,
+  allTasks: (unprocessed: boolean) => ["meetings", "tasks", "all", unprocessed] as const,
 };
 
 export function useMeetings() {
@@ -130,4 +138,66 @@ export function useGenerateSummary(meetingId: string) {
   }, []);
 
   return { generate, reset, streamedText, isStreaming, error };
+}
+
+export function useMeetingTasks(meetingId: string) {
+  return useQuery({
+    queryKey: meetingKeys.tasks(meetingId),
+    queryFn: () => getMeetingTasks(meetingId),
+    select: (res) => res.data as MeetingTask[],
+    enabled: !!meetingId,
+  });
+}
+
+export function useExtractTasks(meetingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => extractMeetingTasks(meetingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: meetingKeys.tasks(meetingId) });
+      toast.success("Tasks extracted successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to extract tasks");
+    },
+  });
+}
+
+export function usePushToGitHub(meetingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, assignees }: { taskId: string; assignees?: string[] }) =>
+      pushTaskToGitHub(meetingId, taskId, assignees),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: meetingKeys.tasks(meetingId) });
+      queryClient.invalidateQueries({ queryKey: meetingKeys.allTasks(false) });
+      toast.success("GitHub issue created");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create GitHub issue");
+    },
+  });
+}
+
+export function useAllMeetingTasks(unprocessed = false) {
+  return useQuery({
+    queryKey: meetingKeys.allTasks(unprocessed),
+    queryFn: () => getAllMeetingTasks(unprocessed),
+    select: (res) => res.data as MeetingTask[],
+  });
+}
+
+export function useNotifySlack(meetingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskIds?: string[]) => notifySlack(meetingId, taskIds),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: meetingKeys.tasks(meetingId) });
+      const count = (res?.data as { notified_count?: number })?.notified_count ?? 0;
+      toast.success(`Slack notification sent for ${count} task${count !== 1 ? "s" : ""}`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to send Slack notification");
+    },
+  });
 }

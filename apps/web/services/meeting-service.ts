@@ -4,6 +4,7 @@ import { handleApiError } from "@/types/apiError";
 import type { ApiResponse } from "@/types/apiResponse";
 import type {
   Meeting,
+  MeetingTask,
   JoinMeetingRequest,
   SummaryFormat,
   SummaryLength,
@@ -63,6 +64,71 @@ export async function getMeetingTranscript(
   try {
     return await parseResponse(
       apiClient.get(`/meetings/${meetingId}/transcript`),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function pushTaskToGitHub(
+  meetingId: string,
+  taskId: string,
+  assignees?: string[],
+): Promise<ApiResponse<MeetingTask>> {
+  try {
+    return await parseResponse(
+      apiClient.post(`/meetings/${meetingId}/tasks/${taskId}/push/github`, {
+        assignees: assignees ?? null,
+      }),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function notifySlack(
+  meetingId: string,
+  taskIds?: string[],
+): Promise<ApiResponse<{ notified_count: number; slack_ts: string }>> {
+  try {
+    return await parseResponse(
+      apiClient.post(`/meetings/${meetingId}/tasks/notify/slack`, {
+        task_ids: taskIds ?? null,
+      }),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getMeetingTasks(
+  meetingId: string,
+): Promise<ApiResponse<MeetingTask[]>> {
+  try {
+    return await parseResponse(apiClient.get(`/meetings/${meetingId}/tasks`));
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getAllMeetingTasks(
+  unprocessed = false,
+): Promise<ApiResponse<MeetingTask[]>> {
+  try {
+    return await parseResponse(
+      apiClient.get(`/meetings/tasks/all`, { params: { unprocessed } }),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function extractMeetingTasks(
+  meetingId: string,
+): Promise<ApiResponse<MeetingTask[]>> {
+  try {
+    return await parseResponse(
+      apiClient.post(`/meetings/${meetingId}/tasks/extract`),
     );
   } catch (error) {
     handleApiError(error);

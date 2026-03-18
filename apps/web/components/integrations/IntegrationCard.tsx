@@ -1,12 +1,24 @@
 "use client";
 
-import { Settings, ExternalLink, Clock, Plug, PlugZap } from "lucide-react";
+import { useState } from "react";
+import { Settings, ExternalLink, Clock, Plug, PlugZap, Loader2, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   useConnectIntegration,
   useDisconnectIntegration,
+  useUpdateIntegrationSettings,
+  useGitHubRepos,
+  useSlackChannels,
 } from "@/hooks/useIntegrations";
 import type { IntegrationInfo } from "@/types/integration";
 
@@ -18,7 +30,7 @@ interface ProviderConfig {
   label: string;
   icon: React.ReactNode;
   externalUrl: string;
-  describeMetadata: (metadata: Record<string, string>) => string | null;
+  describeMetadata: (meta: Record<string, string>) => string | null;
 }
 
 const GitHubIcon = () => (
@@ -39,8 +51,10 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
     icon: <GitHubIcon />,
     externalUrl: "https://github.com",
     describeMetadata: (meta) => {
-      if (meta.login) return `@${meta.login}`;
-      return null;
+      const parts: string[] = [];
+      if (meta.login) parts.push(`@${meta.login}`);
+      if (meta.default_repo) parts.push(meta.default_repo);
+      return parts.length ? parts.join(" · ") : null;
     },
   },
   slack: {
@@ -55,6 +69,144 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
     },
   },
 };
+
+// ---------------------------------------------------------------------------
+// Settings dialogs
+// ---------------------------------------------------------------------------
+
+function GitHubSettingsContent({
+  currentRepo,
+  onSave,
+  isSaving,
+}: {
+  currentRepo: string;
+  onSave: (value: string) => void;
+  isSaving: boolean;
+}) {
+  const [repo, setRepo] = useState(currentRepo);
+  const { data: repos = [], isLoading } = useGitHubRepos(true);
+
+  return (
+    <div className="space-y-4 py-2">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">
+          Default Repository
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Issues created from meeting tasks will go to this repository.
+        </p>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading repositories…
+          </div>
+        ) : repos.length > 0 ? (
+          <select
+            value={repo}
+            onChange={(e) => setRepo(e.target.value)}
+            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">— Select a repository —</option>
+            {repos.map((r) => (
+              <option key={r.full_name} value={r.full_name}>
+                {r.full_name} {r.private ? "(private)" : ""}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={repo}
+            onChange={(e) => setRepo(e.target.value)}
+            placeholder="owner/repository"
+            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        )}
+      </div>
+      <DialogFooter>
+        <Button
+          className="gap-2"
+          onClick={() => onSave(repo)}
+          disabled={isSaving || !repo.trim()}
+        >
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          {isSaving ? "Saving…" : "Save"}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+function SlackSettingsContent({
+  currentChannel,
+  onSave,
+  isSaving,
+}: {
+  currentChannel: string;
+  onSave: (value: string) => void;
+  isSaving: boolean;
+}) {
+  const [channel, setChannel] = useState(currentChannel);
+  const { data: channels = [], isLoading } = useSlackChannels(true);
+
+  return (
+    <div className="space-y-4 py-2">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">
+          Default Channel
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Task notifications will be posted to this channel.
+        </p>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading channels…
+          </div>
+        ) : channels.length > 0 ? (
+          <select
+            value={channel}
+            onChange={(e) => setChannel(e.target.value)}
+            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">— Select a channel —</option>
+            {channels.map((c) => (
+              <option key={c.id} value={c.id}>
+                #{c.name} {c.is_private ? "(private)" : ""}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={channel}
+            onChange={(e) => setChannel(e.target.value)}
+            placeholder="#channel-name or channel ID"
+            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        )}
+      </div>
+      <DialogFooter>
+        <Button
+          className="gap-2"
+          onClick={() => onSave(channel)}
+          disabled={isSaving || !channel.trim()}
+        >
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          {isSaving ? "Saving…" : "Save"}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -82,115 +234,156 @@ interface IntegrationCardProps {
 export function IntegrationCard({ integration }: IntegrationCardProps) {
   const { provider, connected, connected_at, metadata } = integration;
   const config = PROVIDER_CONFIG[provider];
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { mutate: connect, isPending: isConnecting } = useConnectIntegration();
   const { mutate: disconnect, isPending: isDisconnecting } =
     useDisconnectIntegration();
+  const { mutate: saveSettings, isPending: isSaving } =
+    useUpdateIntegrationSettings();
 
   if (!config) return null;
 
   const metaLine = config.describeMetadata(metadata);
   const relativeTime = connected_at ? formatRelativeTime(connected_at) : null;
 
-  return (
-    <Card className="relative transition-all hover:ring-border/40">
-      <CardContent className="pt-2">
-        <div className="flex items-start justify-between gap-3">
-          {/* Left: icon + info */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Icon container */}
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-              {config.icon}
-            </div>
+  function handleSave(key: string, value: string) {
+    saveSettings(
+      { provider, metadata: { [key]: value } },
+      { onSuccess: () => setSettingsOpen(false) },
+    );
+  }
 
-            {/* Name + badge + meta */}
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm text-foreground">
-                  {config.label}
-                </span>
-                {connected ? (
-                  <Badge
-                    className="bg-success/15 text-success border-success/20 gap-1"
-                    variant="outline"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-success inline-block" />
-                    Connected
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Not connected
-                  </Badge>
-                )}
+  return (
+    <>
+      <Card className="relative transition-all hover:ring-border/40">
+        <CardContent className="pt-2">
+          <div className="flex items-start justify-between gap-3">
+            {/* Left: icon + info */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+                {config.icon}
               </div>
 
-              {connected && (
-                <div className="mt-0.5 space-y-0.5">
-                  {metaLine && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {metaLine}
-                    </p>
-                  )}
-                  {relativeTime && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3 shrink-0" />
-                      Last sync: {relativeTime}
-                    </p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-sm text-foreground">
+                    {config.label}
+                  </span>
+                  {connected ? (
+                    <Badge
+                      className="bg-success/15 text-success border-success/20 gap-1"
+                      variant="outline"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-success inline-block" />
+                      Connected
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      Not connected
+                    </Badge>
                   )}
                 </div>
+
+                {connected && (
+                  <div className="mt-0.5 space-y-0.5">
+                    {metaLine && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {metaLine}
+                      </p>
+                    )}
+                    {relativeTime && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        Last sync: {relativeTime}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: action icons */}
+            <div className="flex items-center gap-1 shrink-0">
+              {connected && (
+                <button
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                  aria-label={`${config.label} settings`}
+                  title="Configure settings"
+                  onClick={() => setSettingsOpen(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
               )}
+              <a
+                href={config.externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                aria-label={`Open ${config.label}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
           </div>
 
-          {/* Right: action icons + connect/disconnect */}
-          <div className="flex items-center gap-1 shrink-0">
-            {connected && (
-              <button
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                aria-label={`${config.label} settings`}
-                title="Settings (coming soon)"
+          {/* Connect / Disconnect button */}
+          <div className="mt-4">
+            {connected ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                disabled={isDisconnecting}
+                onClick={() => disconnect(provider)}
               >
-                <Settings className="h-4 w-4" />
-              </button>
+                <Plug className="h-3.5 w-3.5" />
+                {isDisconnecting ? "Disconnecting…" : "Disconnect"}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="w-full"
+                disabled={isConnecting}
+                onClick={() => connect(provider)}
+              >
+                <PlugZap className="h-3.5 w-3.5" />
+                {isConnecting ? "Connecting…" : `Connect ${config.label}`}
+              </Button>
             )}
-            <a
-              href={config.externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-              aria-label={`Open ${config.label}`}
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Connect / Disconnect button */}
-        <div className="mt-4">
-          {connected ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-              disabled={isDisconnecting}
-              onClick={() => disconnect(provider)}
-            >
-              <Plug className="h-3.5 w-3.5" />
-              {isDisconnecting ? "Disconnecting…" : "Disconnect"}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="w-full"
-              disabled={isConnecting}
-              onClick={() => connect(provider)}
-            >
-              <PlugZap className="h-3.5 w-3.5" />
-              {isConnecting ? "Connecting…" : `Connect ${config.label}`}
-            </Button>
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="glass-strong border-border">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              {config.icon}
+              {config.label} Settings
+            </DialogTitle>
+            <DialogDescription>
+              Configure defaults for task actions.
+            </DialogDescription>
+          </DialogHeader>
+
+          {provider === "github" && (
+            <GitHubSettingsContent
+              currentRepo={metadata.default_repo ?? ""}
+              onSave={(repo) => handleSave("default_repo", repo)}
+              isSaving={isSaving}
+            />
           )}
-        </div>
-      </CardContent>
-    </Card>
+          {provider === "slack" && (
+            <SlackSettingsContent
+              currentChannel={metadata.default_channel ?? ""}
+              onSave={(channel) => handleSave("default_channel", channel)}
+              isSaving={isSaving}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

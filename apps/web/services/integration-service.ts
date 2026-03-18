@@ -6,6 +6,23 @@ import type {
   IntegrationListResponse,
 } from "@/types/integration";
 
+export interface GitHubRepo {
+  full_name: string;
+  private: boolean;
+}
+
+export interface GitHubCollaborator {
+  login: string;
+  avatar_url: string;
+  type: string;
+}
+
+export interface SlackChannel {
+  id: string;
+  name: string;
+  is_private: boolean;
+}
+
 async function parseResponse<T>(
   promise: Promise<{ data: ApiResponse<T> }>,
 ): Promise<ApiResponse<T>> {
@@ -44,6 +61,51 @@ export async function disconnectIntegration(
   try {
     return await parseResponse(
       apiClient.delete(`/integrations/${provider}`),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function updateIntegrationSettings(
+  provider: string,
+  metadata: Record<string, string>,
+): Promise<ApiResponse<{ metadata: Record<string, string> }>> {
+  try {
+    return await parseResponse(
+      apiClient.patch(`/integrations/${provider}/settings`, { metadata }),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getGitHubRepos(): Promise<
+  ApiResponse<{ repos: GitHubRepo[] }>
+> {
+  try {
+    return await parseResponse(apiClient.get("/integrations/github/repos"));
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getSlackChannels(): Promise<
+  ApiResponse<{ channels: SlackChannel[] }>
+> {
+  try {
+    return await parseResponse(apiClient.get("/integrations/slack/channels"));
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function getGitHubCollaborators(
+  repo: string,
+): Promise<ApiResponse<{ collaborators: GitHubCollaborator[] }>> {
+  try {
+    return await parseResponse(
+      apiClient.get("/integrations/github/collaborators", { params: { repo } }),
     );
   } catch (error) {
     handleApiError(error);
