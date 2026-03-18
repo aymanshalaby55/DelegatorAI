@@ -61,7 +61,7 @@ function stepsToProgress(steps: TaskStep[]): number {
   return Math.round((completed / steps.length) * 100);
 }
 
-export function useTaskStream(taskId: string | null) {
+export function useTaskStream(_taskId: string | null) {
   const queryClient = useQueryClient();
 
   const [state, setState] = useState<TaskStreamState>({

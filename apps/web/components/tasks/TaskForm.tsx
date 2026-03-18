@@ -22,7 +22,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 interface TaskFormProps {
-  onSubmit: (value: string) => void;
+  onSubmit: (_value: string) => void;
   isLoading?: boolean;
 }
 

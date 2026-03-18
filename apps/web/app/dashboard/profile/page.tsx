@@ -8,6 +8,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import { useIntegrations } from "@/hooks/useIntegrations";
 
 function Avatar({ user }: { user: SupabaseUser }) {
@@ -17,11 +18,12 @@ function Avatar({ user }: { user: SupabaseUser }) {
 
   if (avatarUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={avatarUrl}
         alt="Avatar"
         className="h-20 w-20 rounded-2xl object-cover"
+        width={80}
+        height={80}
       />
     );
   }

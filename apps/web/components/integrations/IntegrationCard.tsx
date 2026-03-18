@@ -30,7 +30,7 @@ interface ProviderConfig {
   label: string;
   icon: React.ReactNode;
   externalUrl: string;
-  describeMetadata: (meta: Record<string, string>) => string | null;
+  describeMetadata: (_meta: Record<string, string>) => string | null;
 }
 
 const GitHubIcon = () => (
@@ -80,7 +80,7 @@ function GitHubSettingsContent({
   isSaving,
 }: {
   currentRepo: string;
-  onSave: (value: string) => void;
+  onSave: (_value: string) => void;
   isSaving: boolean;
 }) {
   const [repo, setRepo] = useState(currentRepo);
@@ -147,7 +147,7 @@ function SlackSettingsContent({
   isSaving,
 }: {
   currentChannel: string;
-  onSave: (value: string) => void;
+  onSave: (_value: string) => void;
   isSaving: boolean;
 }) {
   const [channel, setChannel] = useState(currentChannel);

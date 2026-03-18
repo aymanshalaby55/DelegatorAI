@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   CheckSquare,
@@ -53,7 +54,7 @@ interface AssigneeDialogProps {
   task: MeetingTask;
   defaultRepo: string;
   githubConnected: boolean;
-  onConfirm: (assignees: string[]) => void;
+  onConfirm: (_assignees: string[]) => void;
   onClose: () => void;
 }
 
@@ -172,10 +173,11 @@ function AssigneeDialog({
                   >
                     {/* Avatar */}
                     {c.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={c.avatar_url}
                         alt={c.login}
+                        width={28}
+                        height={28}
                         className="h-7 w-7 rounded-full object-cover shrink-0"
                       />
                     ) : (
@@ -233,16 +235,14 @@ function AssigneeDialog({
 
 interface TaskItemProps {
   task: MeetingTask;
-  meetingId: string;
   githubConnected: boolean;
   defaultRepo: string;
   isPushingThis: boolean;
-  onPushGitHub: (taskId: string, assignees: string[]) => void;
+  onPushGitHub: (_taskId: string, _assignees: string[]) => void;
 }
 
 function TaskItem({
   task,
-  meetingId: _meetingId,
   githubConnected,
   defaultRepo,
   isPushingThis,
@@ -541,7 +541,6 @@ export function TasksTab({ meeting }: TasksTabProps) {
           <TaskItem
             key={task.id}
             task={task}
-            meetingId={meeting.id}
             githubConnected={githubConnected}
             defaultRepo={defaultRepo}
             isPushingThis={
