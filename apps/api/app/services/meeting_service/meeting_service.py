@@ -40,7 +40,7 @@ class MeetingService:
             self.supabase.table("meetings")
             .select("*")
             .filter("user_id", "eq", user_id)
-            .order("created_at", desc=False)
+            .order("created_at", desc=True)
             .execute()
         )
         return success_response("Meetings fetched successfully", data=result.data)

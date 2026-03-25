@@ -48,6 +48,24 @@ async def get_task(
     return success_response("Task retrieved", data=task)
 
 
+@router.post("/{task_id}/subtasks/{subtask_index}/notify-slack", response_model=ApiResponse)
+async def notify_slack_subtask(
+    task_id: uuid.UUID,
+    subtask_index: int,
+    user: dict = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
+):
+    try:
+        subtask = await service.notify_slack_subtask(
+            task_id=str(task_id),
+            user_id=user["id"],
+            subtask_index=subtask_index,
+        )
+        return success_response("Slack message sent", data=subtask)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @router.get("/{task_id}/stream")
 async def stream_task(
     task_id: uuid.UUID,

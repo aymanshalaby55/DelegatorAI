@@ -10,6 +10,7 @@ import {
   getGitHubRepos,
   getSlackChannels,
   getGitHubCollaborators,
+  sendSlackMessage,
 } from "@/services/integration-service";
 
 export const integrationKeys = {
@@ -92,6 +93,19 @@ export function useSlackChannels(enabled: boolean) {
     queryFn: getSlackChannels,
     select: (res) => res.data?.channels ?? [],
     enabled,
+  });
+}
+
+export function useSendSlackMessage() {
+  return useMutation({
+    mutationFn: ({ text, channel }: { text: string; channel?: string }) =>
+      sendSlackMessage(text, channel),
+    onSuccess: () => {
+      toast.success("Slack message sent");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to send Slack message");
+    },
   });
 }
 

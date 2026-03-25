@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import { createTask, getTasks, getTask, streamTaskProgress } from "@/services/task-service";
+import { createTask, getTasks, getTask, streamTaskProgress, notifySlackSubtask } from "@/services/task-service";
 import type { AgentTask, TaskStep, Subtask } from "@/types/task";
 
 export const taskKeys = {
@@ -37,6 +37,22 @@ export function useCreateTask() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create task");
+    },
+  });
+}
+
+export function useNotifySlackSubtask(taskId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (subtaskIndex: number) =>
+      notifySlackSubtask(taskId, subtaskIndex),
+    onSuccess: () => {
+      toast.success("Slack message sent");
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId) });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to send Slack message");
     },
   });
 }

@@ -10,10 +10,14 @@ import {
   ExternalLink,
   MessageSquare,
   Github,
+  Send,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { AgentTask, TaskStep, Subtask, TaskStreamState } from "@/types/task";
+import { useNotifySlackSubtask } from "@/hooks/useTasks";
+import type { TaskStreamState } from "@/hooks/useTasks";
+import type { AgentTask, TaskStep, Subtask } from "@/types/task";
 
 // ---------------------------------------------------------------------------
 // Step indicator
@@ -64,9 +68,17 @@ function StepItem({ step }: StepItemProps) {
 
 interface SubtaskItemProps {
   subtask: Subtask;
+  taskId: string;
+  subtaskIndex: number;
+  isLive: boolean;
 }
 
-function SubtaskItem({ subtask }: SubtaskItemProps) {
+function SubtaskItem({ subtask, taskId, subtaskIndex, isLive }: SubtaskItemProps) {
+  const { mutate: sendSlack, isPending: isSending } = useNotifySlackSubtask(taskId);
+
+  const canSendSlack =
+    !isLive && (subtask.slack_status === null || subtask.slack_status === "failed");
+
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
       <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -99,6 +111,29 @@ function SubtaskItem({ subtask }: SubtaskItemProps) {
               <MessageSquare className="h-2.5 w-2.5 mr-1" />
               Slack
             </Badge>
+          )}
+          {subtask.slack_status === "failed" && (
+            <Badge variant="destructive" className="text-xs py-0 h-5">
+              <MessageSquare className="h-2.5 w-2.5 mr-1" />
+              Slack Failed
+            </Badge>
+          )}
+
+          {canSendSlack && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-5 px-1.5 text-xs gap-1 border-muted-foreground/30 hover:border-primary/50 hover:text-primary"
+              disabled={isSending}
+              onClick={() => sendSlack(subtaskIndex)}
+            >
+              {isSending ? (
+                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+              ) : (
+                <Send className="h-2.5 w-2.5" />
+              )}
+              {subtask.slack_status === "failed" ? "Retry Slack" : "Send to Slack"}
+            </Button>
           )}
         </div>
       </div>
@@ -211,7 +246,13 @@ export function TaskCard({ task, streamState }: TaskCardProps) {
           </p>
           <div className="space-y-2">
             {subtasks.map((subtask, i) => (
-              <SubtaskItem key={i} subtask={subtask} />
+              <SubtaskItem
+                key={i}
+                subtask={subtask}
+                taskId={task.id}
+                subtaskIndex={i}
+                isLive={isLive}
+              />
             ))}
           </div>
         </div>

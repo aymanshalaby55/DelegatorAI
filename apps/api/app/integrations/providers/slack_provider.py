@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize"
 SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access"
 SLACK_API_URL = "https://slack.com/api"
-SLACK_SCOPES = "chat:write,channels:read,channels:join,users:read,users:read.email"
+SLACK_SCOPES = "chat:write,channels:read,channels:join,groups:read,users:read,users:read.email"
 
 
 @register_provider("slack")
@@ -154,8 +154,6 @@ class SlackProvider(IntegrationProvider, ActionableProvider):
                     timeout=10,
                 )
                 data = response.json()
-                # method_not_supported_for_channel_type = private channel → ignore
-                # already_in_channel → fine
                 if not data.get("ok") and data.get("error") not in (
                     "method_not_supported_for_channel_type",
                     "already_in_channel",
@@ -206,33 +204,48 @@ class SlackProvider(IntegrationProvider, ActionableProvider):
             return data
 
     async def _list_channels(self, token: str) -> dict:
-        """Return public + private channels the bot has access to."""
+        """Return channels the bot has access to.
+
+        Tries public + private first (requires groups:read scope).
+        Falls back to public-only if the token lacks groups:read.
+        """
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{SLACK_API_URL}/conversations.list",
-                params={
-                    "types": "public_channel,private_channel",
-                    "exclude_archived": "true",
-                    "limit": 200,
-                },
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=15,
-            )
-            response.raise_for_status()
-            data = response.json()
-            if not data.get("ok"):
-                raise ValueError(
-                    f"Slack conversations.list failed: {data.get('error', 'unknown error')}"
+            for types in ("public_channel,private_channel", "public_channel"):
+                response = await client.get(
+                    f"{SLACK_API_URL}/conversations.list",
+                    params={
+                        "types": types,
+                        "exclude_archived": "true",
+                        "limit": 200,
+                    },
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=15,
                 )
-            channels = data.get("channels", [])
-            return {
-                "channels": [
-                    {
-                        "id": c["id"],
-                        "name": c["name"],
-                        "is_private": c.get("is_private", False),
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("ok"):
+                    channels = data.get("channels", [])
+                    return {
+                        "channels": [
+                            {
+                                "id": c["id"],
+                                "name": c["name"],
+                                "is_private": c.get("is_private", False),
+                            }
+                            for c in channels
+                            if isinstance(c, dict)
+                        ]
                     }
-                    for c in channels
-                    if isinstance(c, dict)
-                ]
-            }
+
+                error = data.get("error", "unknown_error")
+                # missing_scope on private channels → retry with public only
+                if error == "missing_scope" and "private_channel" in types:
+                    logger.info(
+                        "groups:read scope missing; retrying with public channels only"
+                    )
+                    continue
+
+                raise ValueError(f"Slack conversations.list failed: {error}")
+
+        return {"channels": []}

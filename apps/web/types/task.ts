@@ -15,6 +15,7 @@ export interface Subtask {
   github_issue_url: string | null;
   github_error: string | null;
   slack_status: string | null;
+  slack_error: string | null;
 }
 
 export interface AgentTask {

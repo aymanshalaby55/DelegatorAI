@@ -236,17 +236,23 @@ function AssigneeDialog({
 interface TaskItemProps {
   task: MeetingTask;
   githubConnected: boolean;
+  slackConnected: boolean;
   defaultRepo: string;
   isPushingThis: boolean;
+  isNotifyingThis: boolean;
   onPushGitHub: (_taskId: string, _assignees: string[]) => void;
+  onNotifySlack: () => void;
 }
 
 function TaskItem({
   task,
   githubConnected,
+  slackConnected,
   defaultRepo,
   isPushingThis,
+  isNotifyingThis,
   onPushGitHub,
+  onNotifySlack,
 }: TaskItemProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -260,6 +266,15 @@ function TaskItem({
       return;
     }
     setDialogOpen(true);
+  }
+
+  function handleSlackClick() {
+    if (!slackConnected) {
+      toast.error("Slack not connected — go to Integrations to connect it.");
+      router.push("/dashboard/integrations");
+      return;
+    }
+    onNotifySlack();
   }
 
   function handleConfirm(assignees: string[]) {
@@ -307,7 +322,7 @@ function TaskItem({
                 </button>
               )}
 
-              {task.slack_notified_at && (
+              {task.slack_notified_at ? (
                 <Badge
                   variant="outline"
                   className="text-xs py-0 h-5 border-green-500/40 text-green-500"
@@ -315,6 +330,20 @@ function TaskItem({
                   <MessageSquare className="h-2.5 w-2.5 mr-1" />
                   Notified
                 </Badge>
+              ) : (
+                <button
+                  onClick={handleSlackClick}
+                  disabled={isNotifyingThis}
+                  title={slackConnected ? "Send Slack notification" : "Connect Slack first"}
+                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isNotifyingThis ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-3 w-3" />
+                  )}
+                  {isNotifyingThis ? "Sending…" : "Send to Slack"}
+                </button>
               )}
             </div>
           </div>
@@ -375,7 +404,11 @@ export function TasksTab({ meeting }: TasksTabProps) {
   const { mutate: extract, isPending: isExtracting } = useExtractTasks(meeting.id);
   const { mutate: pushGitHub, isPending: isPushingGitHub, variables: pushingVars } =
     usePushToGitHub(meeting.id);
-  const { mutate: notifySlack, isPending: isNotifying } = useNotifySlack(meeting.id);
+  const {
+    mutate: notifySlack,
+    isPending: isNotifying,
+    variables: notifyingVars,
+  } = useNotifySlack(meeting.id);
 
   const { data: integrations = [] } = useIntegrations();
   const githubIntegration = integrations.find((i) => i.provider === "github");
@@ -542,11 +575,18 @@ export function TasksTab({ meeting }: TasksTabProps) {
             key={task.id}
             task={task}
             githubConnected={githubConnected}
+            slackConnected={slackConnected}
             defaultRepo={defaultRepo}
             isPushingThis={
               isPushingGitHub && (pushingVars as { taskId: string } | undefined)?.taskId === task.id
             }
+            isNotifyingThis={
+              isNotifying &&
+              Array.isArray(notifyingVars) &&
+              notifyingVars[0] === task.id
+            }
             onPushGitHub={(taskId, assignees) => pushGitHub({ taskId, assignees })}
+            onNotifySlack={() => notifySlack([task.id])}
           />
         ))}
       </ul>

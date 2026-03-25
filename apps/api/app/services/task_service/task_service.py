@@ -248,26 +248,50 @@ class TaskService:
         await self._update_task(task_id, steps=steps)
         _publish(task_id, {"type": "step_update", "steps": steps})
 
-        try:
-            slack_text = self._build_slack_message(prompt, subtasks)
-            await integration_manager.execute_action(
-                user_id=user_id,
-                provider_name="slack",
-                action="post_message",
-                payload={"text": slack_text},
-            )
-            steps[2]["status"] = "completed"
-            for subtask in subtasks:
-                subtask["slack_status"] = "sent"
-            await self._update_task(task_id, steps=steps, subtasks=subtasks)
-            _publish(task_id, {"type": "step_update", "steps": steps})
+        slack_any_failed = False
 
-        except Exception as exc:
-            logger.warning("Slack notification failed for task %s: %s", task_id, exc)
-            steps[2]["status"] = "failed"
-            steps[2]["error"] = str(exc)
-            await self._update_task(task_id, steps=steps)
-            _publish(task_id, {"type": "step_update", "steps": steps})
+        for i, subtask in enumerate(subtasks):
+            try:
+                slack_text = self._build_single_slack_message(subtask)
+                await integration_manager.execute_action(
+                    user_id=user_id,
+                    provider_name="slack",
+                    action="post_message",
+                    payload={"text": slack_text},
+                )
+                subtask["slack_status"] = "sent"
+                subtask["slack_error"] = None
+                subtasks[i] = subtask
+                _publish(
+                    task_id,
+                    {"type": "subtask_update", "index": i, "subtask": subtask},
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Slack message failed for subtask %d of task %s: %s",
+                    i,
+                    task_id,
+                    exc,
+                )
+                subtask["slack_status"] = "failed"
+                subtask["slack_error"] = str(exc)
+                subtasks[i] = subtask
+                slack_any_failed = True
+                _publish(
+                    task_id,
+                    {
+                        "type": "subtask_update",
+                        "index": i,
+                        "subtask": subtask,
+                        "error": str(exc),
+                    },
+                )
+
+        steps[2]["status"] = "failed" if slack_any_failed else "completed"
+        if slack_any_failed:
+            steps[2]["error"] = "One or more Slack messages failed to send"
+        await self._update_task(task_id, steps=steps, subtasks=subtasks)
+        _publish(task_id, {"type": "step_update", "steps": steps})
 
         # ── Finalize ──────────────────────────────────────────────────
         await self._update_task(task_id, status="completed", subtasks=subtasks)
@@ -281,6 +305,37 @@ class TaskService:
             },
         )
         _publish(task_id, {"type": "done"})
+
+    # ------------------------------------------------------------------
+    # Manual actions
+    # ------------------------------------------------------------------
+
+    async def notify_slack_subtask(
+        self, task_id: str, user_id: str, subtask_index: int
+    ) -> dict:
+        task = await self.get_task(task_id, user_id)
+        if not task:
+            raise ValueError("Task not found")
+        subtasks: list[dict] = task.get("subtasks", [])
+        if subtask_index < 0 or subtask_index >= len(subtasks):
+            raise ValueError(f"Subtask index {subtask_index} out of range")
+
+        subtask = subtasks[subtask_index]
+        integration_manager = IntegrationManager(self.supabase, self.settings)
+
+        slack_text = self._build_single_slack_message(subtask)
+        await integration_manager.execute_action(
+            user_id=user_id,
+            provider_name="slack",
+            action="post_message",
+            payload={"text": slack_text},
+        )
+
+        subtask["slack_status"] = "sent"
+        subtask["slack_error"] = None
+        subtasks[subtask_index] = subtask
+        await self._update_task(task_id, subtasks=subtasks)
+        return subtask
 
     # ------------------------------------------------------------------
     # Static helpers
@@ -308,15 +363,13 @@ class TaskService:
         return []
 
     @staticmethod
-    def _build_slack_message(prompt: str, subtasks: list[dict]) -> str:
-        lines = [f"*New Task Breakdown*\n*Prompt:* {prompt}\n"]
-        for i, st in enumerate(subtasks, 1):
-            lines.append(f"{i}. *{st['title']}*\n   {st['description']}")
-            if st.get("github_issue_url"):
-                lines.append(
-                    f"   <{st['github_issue_url']}|"
-                    f"GitHub Issue #{st.get('github_issue_number')}>"
-                )
+    def _build_single_slack_message(subtask: dict) -> str:
+        lines = [f"*{subtask['title']}*", subtask["description"]]
+        if subtask.get("github_issue_url"):
+            lines.append(
+                f"<{subtask['github_issue_url']}|"
+                f"GitHub Issue #{subtask.get('github_issue_number')}>"
+            )
         return "\n".join(lines)
 
 

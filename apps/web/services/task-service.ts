@@ -41,6 +41,19 @@ export async function getTask(taskId: string): Promise<ApiResponse<AgentTask>> {
   }
 }
 
+export async function notifySlackSubtask(
+  taskId: string,
+  subtaskIndex: number,
+): Promise<ApiResponse<unknown>> {
+  try {
+    return await parseResponse(
+      apiClient.post(`/tasks/${taskId}/subtasks/${subtaskIndex}/notify-slack`),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
 /**
  * Streams SSE events for a task pipeline.
  * Yields parsed TaskSSEEvent objects as they arrive.

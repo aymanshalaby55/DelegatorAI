@@ -111,3 +111,18 @@ export async function getGitHubCollaborators(
     handleApiError(error);
   }
 }
+
+export async function sendSlackMessage(
+  text: string,
+  channel?: string,
+): Promise<ApiResponse<unknown>> {
+  try {
+    const payload: Record<string, string> = { text };
+    if (channel) payload.channel = channel;
+    return await parseResponse(
+      apiClient.post("/integrations/slack/actions/post_message", payload),
+    );
+  } catch (error) {
+    handleApiError(error);
+  }
+}

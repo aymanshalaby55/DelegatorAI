@@ -18,6 +18,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TaskForm } from "@/components/tasks/TaskForm";
+import { SlackMessageForm } from "@/components/tasks/SlackMessageForm";
 import { TaskCard } from "@/components/tasks/TaskCard";
 import { useTasks, useCreateAndStreamTask } from "@/hooks/useTasks";
 import { useAllMeetingTasks } from "@/hooks/useMeeting";
@@ -168,7 +169,6 @@ function MeetingTaskRow({ task }: { task: MeetingTask }) {
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function TasksPage() {
   const { data: agentTasks = [], isLoading: agentLoading, isError, error } = useTasks();
@@ -225,6 +225,7 @@ export default function TasksPage() {
           </div>
 
           <TaskForm onSubmit={handleSubmit} isLoading={isStreaming} />
+          <SlackMessageForm />
 
           {isError && (
             <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center gap-2">
