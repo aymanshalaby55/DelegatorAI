@@ -4,7 +4,7 @@ export interface Meeting {
   title: string;
   meeting_url: string;
   platform: string;
-  status: "JOINING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  status: "joining" | "in_progress" | "completed" | "failed";
   transcript: string | null;
   summary: string | null;
   bot_id: string;
@@ -22,7 +22,7 @@ export type MeetingResponse = {
   meeting: Meeting;
 };
 
-export type MeetingStatus = "COMPLETED" | "IN_PROGRESS" | "PENDING" | "FAILED";
+export type MeetingStatus = "completed" | "in_progress" | "pending" | "failed";
 
 export type SummaryLength = "short" | "medium" | "detailed";
 export type SummaryFormat = "bullets" | "paragraph";

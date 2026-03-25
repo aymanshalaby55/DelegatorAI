@@ -27,10 +27,10 @@ export default function AnalyticsPage() {
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: integrations = [], isLoading: intLoading } = useIntegrations();
 
-  const completed = meetings.filter((m) => m.status === "COMPLETED").length;
+  const completed = meetings.filter((m) => m.status === "completed").length;
   const withSummaries = meetings.filter((m) => m.summary).length;
   const connectedIntegrations = integrations.filter((i) => i.connected).length;
-  const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
+  const completedTasks = tasks.filter((t) => t.status === "completed").length;
 
   const statusGroups: Record<string, number> = meetings.reduce<
     Record<string, number>

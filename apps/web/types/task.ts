@@ -1,5 +1,5 @@
-export type TaskStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-export type StepStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+export type TaskStatus = "pending" | "processing" | "completed" | "failed";
+export type StepStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface TaskStep {
   name: string;

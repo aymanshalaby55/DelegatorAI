@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
@@ -9,16 +9,9 @@ import { useIntegrations } from "@/hooks/useIntegrations";
 import { IntegrationCard } from "@/components/integrations/IntegrationCard";
 import { IntegrationCardSkeleton } from "@/components/integrations/IntegrationCardSkeleton";
 
-export default function IntegrationsPage() {
+function OAuthToast() {
   const searchParams = useSearchParams();
-  const {
-    data: integrations = [],
-    isLoading,
-    isError,
-    error,
-  } = useIntegrations();
 
-  // Show a toast when redirected back from an OAuth callback
   useEffect(() => {
     const status = searchParams.get("status");
     const provider = searchParams.get("provider");
@@ -31,6 +24,17 @@ export default function IntegrationsPage() {
       toast.error(`Failed to connect ${label}. Please try again.`);
   }, [searchParams]);
 
+  return null;
+}
+
+export default function IntegrationsPage() {
+  const {
+    data: integrations = [],
+    isLoading,
+    isError,
+    error,
+  } = useIntegrations();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -38,6 +42,10 @@ export default function IntegrationsPage() {
       transition={{ duration: 0.3 }}
       className="p-4 md:p-8 max-w-4xl"
     >
+      <Suspense>
+        <OAuthToast />
+      </Suspense>
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">

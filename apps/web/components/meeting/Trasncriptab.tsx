@@ -35,7 +35,7 @@ const SPEAKER_COLORS = [
   { text: "#BE123C", bg: "#FFE4E6" },
 ];
 
-function useSpeakerColors(lines: { speaker?: string }[]) {
+function useSpeakerColors(lines: { speaker?: string | null }[]) {
   return useMemo(() => {
     const map = new Map<string, (typeof SPEAKER_COLORS)[0]>();
     let index = 0;

@@ -73,13 +73,13 @@ export interface TaskStreamState {
 }
 
 const INITIAL_STEPS: TaskStep[] = [
-  { name: "LLM Analysis", status: "PENDING", error: null },
-  { name: "GitHub Issues", status: "PENDING", error: null },
-  { name: "Slack Notification", status: "PENDING", error: null },
+  { name: "LLM Analysis", status: "pending", error: null },
+  { name: "GitHub Issues", status: "pending", error: null },
+  { name: "Slack Notification", status: "pending", error: null },
 ];
 
 function stepsToProgress(steps: TaskStep[]): number {
-  const completed = steps.filter((s) => s.status === "COMPLETED").length;
+  const completed = steps.filter((s) => s.status === "completed").length;
   return Math.round((completed / steps.length) * 100);
 }
 
@@ -201,7 +201,7 @@ export function useTaskStream() {
 
 export function useCreateAndStreamTask() {
   const queryClient = useQueryClient();
-  const stream = useTaskStream(null);
+  const stream = useTaskStream();
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
   const submit = useCallback(

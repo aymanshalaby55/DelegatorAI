@@ -38,13 +38,13 @@ export default function TasksPage() {
   const activeTask = agentTasks.find((t: AgentTask) => t.id === activeTaskId);
   const otherTasks = agentTasks.filter((t: AgentTask) => t.id !== activeTaskId);
   const pendingTasks = otherTasks.filter(
-    (t: AgentTask) => t.status === "PENDING",
+    (t: AgentTask) => t.status === "pending",
   );
   const processingTasks = otherTasks.filter(
-    (t: AgentTask) => t.status === "PROCESSING",
+    (t: AgentTask) => t.status === "processing",
   );
   const doneTasks = otherTasks.filter(
-    (t: AgentTask) => t.status === "COMPLETED" || t.status === "FAILED",
+    (t: AgentTask) => t.status === "completed" || t.status === "failed",
   );
 
   // Split meeting tasks by GitHub status
@@ -164,7 +164,7 @@ export default function TasksPage() {
                 <section className="space-y-3">
                   <SectionHeader
                     icon={
-                      doneTasks.some((t) => t.status === "FAILED")
+                      doneTasks.some((t) => t.status === "failed")
                         ? XCircle
                         : CheckCircle2
                     }
