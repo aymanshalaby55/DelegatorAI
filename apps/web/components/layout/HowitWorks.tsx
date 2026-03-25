@@ -5,7 +5,6 @@ import { motion, useInView } from "framer-motion";
 import { Link2, Send, Check, ArrowDown } from "lucide-react";
 import { SiGithub, SiSlack, SiJira, SiNotion } from "react-icons/si";
 import Particals from "@/components/layout/Particals";
-// Removed unused import: import Particles from "@/components/Particles";
 import Hyperspeed from "./react-bits/Hyperspeed";
 const demoTools = [
   { name: "GitHub", icon: SiGithub, color: "#ffffff" },
@@ -31,7 +30,7 @@ const T = {
 };
 
 const FLY_DUR = T.linkLand - T.linkFly;
-const sp = { type: "spring", stiffness: 300, damping: 24 };
+const sp = { type: "spring", stiffness: 300, damping: 24 } as const;
 
 const fadeUp = (d: number) => ({
   hidden: { opacity: 0, y: 16 },
