@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize"
 SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access"
 SLACK_API_URL = "https://slack.com/api"
-SLACK_SCOPES = "chat:write,channels:read,channels:join,groups:read,users:read,users:read.email"
+SLACK_SCOPES = (
+    "chat:write,channels:read,channels:join,groups:read,users:read,users:read.email"
+)
 
 
 @register_provider("slack")

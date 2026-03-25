@@ -48,7 +48,9 @@ async def get_task(
     return success_response("Task retrieved", data=task)
 
 
-@router.post("/{task_id}/subtasks/{subtask_index}/notify-slack", response_model=ApiResponse)
+@router.post(
+    "/{task_id}/subtasks/{subtask_index}/notify-slack", response_model=ApiResponse
+)
 async def notify_slack_subtask(
     task_id: uuid.UUID,
     subtask_index: int,
