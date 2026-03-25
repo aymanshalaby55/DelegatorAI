@@ -3,7 +3,13 @@
 import { useCallback, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import { createTask, getTasks, getTask, streamTaskProgress, notifySlackSubtask } from "@/services/task-service";
+import {
+  createTask,
+  getTasks,
+  getTask,
+  streamTaskProgress,
+  notifySlackSubtask,
+} from "@/services/task-service";
 import type { AgentTask, TaskStep, Subtask } from "@/types/task";
 
 export const taskKeys = {
@@ -67,17 +73,17 @@ export interface TaskStreamState {
 }
 
 const INITIAL_STEPS: TaskStep[] = [
-  { name: "LLM Analysis", status: "pending", error: null },
-  { name: "GitHub Issues", status: "pending", error: null },
-  { name: "Slack Notification", status: "pending", error: null },
+  { name: "LLM Analysis", status: "PENDING", error: null },
+  { name: "GitHub Issues", status: "PENDING", error: null },
+  { name: "Slack Notification", status: "PENDING", error: null },
 ];
 
 function stepsToProgress(steps: TaskStep[]): number {
-  const completed = steps.filter((s) => s.status === "completed").length;
+  const completed = steps.filter((s) => s.status === "COMPLETED").length;
   return Math.round((completed / steps.length) * 100);
 }
 
-export function useTaskStream(_taskId: string | null) {
+export function useTaskStream() {
   const queryClient = useQueryClient();
 
   const [state, setState] = useState<TaskStreamState>({
@@ -167,8 +173,7 @@ export function useTaskStream(_taskId: string | null) {
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          const message =
-            err instanceof Error ? err.message : "Stream failed";
+          const message = err instanceof Error ? err.message : "Stream failed";
           setState((prev) => ({ ...prev, error: message }));
           toast.error(message);
         }
@@ -194,10 +199,6 @@ export function useTaskStream(_taskId: string | null) {
   return { ...state, startStream, reset };
 }
 
-/**
- * Combined hook: creates a task and immediately starts streaming its progress.
- * Returns both the mutation and the live stream state.
- */
 export function useCreateAndStreamTask() {
   const queryClient = useQueryClient();
   const stream = useTaskStream(null);
@@ -214,7 +215,8 @@ export function useCreateAndStreamTask() {
         stream.startStream(taskId);
         return taskId;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to create task";
+        const message =
+          err instanceof Error ? err.message : "Failed to create task";
         toast.error(message);
         return null;
       }

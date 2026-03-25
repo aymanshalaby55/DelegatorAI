@@ -17,99 +17,9 @@ import { useMeetings } from "@/hooks/useMeeting";
 import { useTasks } from "@/hooks/useTasks";
 import { useIntegrations } from "@/hooks/useIntegrations";
 import { useRouter } from "next/navigation";
-
-interface StatCardProps {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  iconBg: string;
-  iconColor: string;
-  borderColor: string;
-  loading?: boolean;
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  iconBg,
-  iconColor,
-  borderColor,
-  loading,
-}: StatCardProps) {
-  return (
-    <div className={`glass rounded-2xl p-5 space-y-4 border-t-2 ${borderColor}`}>
-      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${iconBg}`}>
-        <Icon className={`h-5 w-5 ${iconColor}`} />
-      </div>
-      {loading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-9 w-16" />
-          <Skeleton className="h-3.5 w-24" />
-          <Skeleton className="h-3 w-20" />
-        </div>
-      ) : (
-        <div className="space-y-1">
-          <p className="text-3xl font-bold text-foreground font-display tabular-nums">{value}</p>
-          <p className="text-sm font-medium text-foreground">{label}</p>
-          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-const statusMeta: Record<string, { label: string; bar: string; dot: string }> = {
-  completed: { label: "Completed", bar: "bg-green-500", dot: "bg-green-500" },
-  in_progress: { label: "In Progress", bar: "bg-primary", dot: "bg-primary" },
-  joining: { label: "Joining", bar: "bg-yellow-500", dot: "bg-yellow-500" },
-  failed: { label: "Failed", bar: "bg-destructive", dot: "bg-destructive" },
-  pending: { label: "Pending", bar: "bg-muted-foreground/50", dot: "bg-muted-foreground" },
-};
-
-const meetingStatusBadge: Record<string, string> = {
-  completed: "bg-green-500/15 text-green-400 border-green-500/25",
-  in_progress: "bg-primary/15 text-primary border-primary/25",
-  joining: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25",
-  failed: "bg-destructive/15 text-destructive border-destructive/25",
-  pending: "bg-muted text-muted-foreground border-border",
-};
-
-function BreakdownRow({
-  status,
-  count,
-  total,
-}: {
-  status: string;
-  count: number;
-  total: number;
-}) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  const meta = statusMeta[status] ?? { label: status, bar: "bg-muted-foreground/50", dot: "bg-muted-foreground" };
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full shrink-0 ${meta.dot}`} />
-          <span className="text-muted-foreground">{meta.label}</span>
-        </div>
-        <span className="font-semibold text-foreground tabular-nums">
-          {count}
-          <span className="font-normal text-muted-foreground ml-1">({pct}%)</span>
-        </span>
-      </div>
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full ${meta.bar} transition-all duration-700`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
+import { meetingStatusBadge, statusMeta } from "@/types/analytics";
+import { StatCard } from "@/components/analytics/StatCard";
+import { BreakdownRow } from "@/components/analytics/BreakdownRow";
 
 export default function AnalyticsPage() {
   const router = useRouter();
@@ -117,19 +27,18 @@ export default function AnalyticsPage() {
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: integrations = [], isLoading: intLoading } = useIntegrations();
 
-  const completed = meetings.filter((m) => m.status === "completed").length;
+  const completed = meetings.filter((m) => m.status === "COMPLETED").length;
   const withSummaries = meetings.filter((m) => m.summary).length;
   const connectedIntegrations = integrations.filter((i) => i.connected).length;
-  const completedTasks = tasks.filter((t) => t.status === "completed").length;
+  const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
 
-  const statusGroups: Record<string, number> = meetings.reduce<Record<string, number>>(
-    (acc, m) => {
-      const s = m.status ?? "unknown";
-      acc[s] = (acc[s] ?? 0) + 1;
-      return acc;
-    },
-    {},
-  );
+  const statusGroups: Record<string, number> = meetings.reduce<
+    Record<string, number>
+  >((acc, m) => {
+    const s = m.status ?? "unknown";
+    acc[s] = (acc[s] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const loading = meetingsLoading || tasksLoading || intLoading;
 
@@ -209,7 +118,9 @@ export default function AnalyticsPage() {
         <div className="glass rounded-2xl p-5 space-y-5">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">Meeting Status Breakdown</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              Meeting Status Breakdown
+            </h2>
           </div>
           {loading ? (
             <div className="space-y-4">
@@ -223,7 +134,9 @@ export default function AnalyticsPage() {
           ) : meetings.length === 0 ? (
             <div className="py-6 text-center space-y-2">
               <Video className="h-8 w-8 text-muted-foreground mx-auto" />
-              <p className="text-sm text-muted-foreground">No meeting data yet.</p>
+              <p className="text-sm text-muted-foreground">
+                No meeting data yet.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -244,7 +157,9 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Recent Meetings</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                Recent Meetings
+              </h2>
             </div>
             <button
               onClick={() => router.push("/dashboard")}
@@ -281,7 +196,9 @@ export default function AnalyticsPage() {
                     onClick={() => router.push(`/dashboard/meetings/${m.id}`)}
                     className="flex items-center gap-3 py-1.5 rounded-lg px-1.5 -mx-1.5 cursor-pointer hover:bg-muted/30 transition-colors group"
                   >
-                    <span className={`h-2 w-2 rounded-full shrink-0 ${meta.dot}`} />
+                    <span
+                      className={`h-2 w-2 rounded-full shrink-0 ${meta.dot}`}
+                    />
                     <p className="text-sm text-foreground truncate flex-1">
                       {m.title || "Untitled"}
                     </p>

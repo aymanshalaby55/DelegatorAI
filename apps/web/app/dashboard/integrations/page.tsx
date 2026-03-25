@@ -7,26 +7,16 @@ import { toast } from "react-hot-toast";
 import { Puzzle } from "lucide-react";
 import { useIntegrations } from "@/hooks/useIntegrations";
 import { IntegrationCard } from "@/components/integrations/IntegrationCard";
-import { Skeleton } from "@/components/ui/skeleton";
-
-function IntegrationCardSkeleton() {
-  return (
-    <div className="rounded-xl ring-1 ring-foreground/10 bg-card p-4 space-y-3">
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-9 w-9 rounded-lg" />
-        <div className="space-y-1.5 flex-1">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-3 w-36" />
-        </div>
-      </div>
-      <Skeleton className="h-8 w-full rounded-md" />
-    </div>
-  );
-}
+import { IntegrationCardSkeleton } from "@/components/integrations/IntegrationCardSkeleton";
 
 export default function IntegrationsPage() {
   const searchParams = useSearchParams();
-  const { data: integrations = [], isLoading, isError, error } = useIntegrations();
+  const {
+    data: integrations = [],
+    isLoading,
+    isError,
+    error,
+  } = useIntegrations();
 
   // Show a toast when redirected back from an OAuth callback
   useEffect(() => {
@@ -36,14 +26,10 @@ export default function IntegrationsPage() {
       ? provider.charAt(0).toUpperCase() + provider.slice(1)
       : "Integration";
 
-    if (status === "success") {
-      toast.success(`${label} connected successfully!`);
-    } else if (status === "error") {
+    if (status === "success") toast.success(`${label} connected successfully!`);
+    else if (status === "error")
       toast.error(`Failed to connect ${label}. Please try again.`);
-    }
-    // Only fire once on mount — intentionally omitting searchParams from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   return (
     <motion.div
@@ -80,7 +66,10 @@ export default function IntegrationsPage() {
               <IntegrationCardSkeleton key={i} />
             ))
           : integrations.map((integration) => (
-              <IntegrationCard key={integration.provider} integration={integration} />
+              <IntegrationCard
+                key={integration.provider}
+                integration={integration}
+              />
             ))}
       </div>
     </motion.div>

@@ -7,47 +7,10 @@ import { User, Mail, Calendar, LogOut, Shield, Puzzle } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/profile/Avatar";
+import { InfoRow } from "@/components/profile/InfoRow";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { useIntegrations } from "@/hooks/useIntegrations";
-
-function Avatar({ user }: { user: SupabaseUser }) {
-  const initial = (user.email ?? user.id).charAt(0).toUpperCase();
-  const avatarUrl =
-    user.user_metadata?.avatar_url as string | undefined;
-
-  if (avatarUrl) {
-    return (
-      <Image
-        src={avatarUrl}
-        alt="Avatar"
-        className="h-20 w-20 rounded-2xl object-cover"
-        width={80}
-        height={80}
-      />
-    );
-  }
-
-  return (
-    <div className="h-20 w-20 rounded-2xl bg-primary/20 flex items-center justify-center text-3xl font-bold text-primary select-none">
-      {initial}
-    </div>
-  );
-}
-
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 py-3 border-b border-border last:border-0">
-      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground truncate">{value}</p>
-      </div>
-    </div>
-  );
-}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -72,7 +35,6 @@ export default function ProfilePage() {
   };
 
   const connectedIntegrations = integrations.filter((i) => i.connected);
-
   const provider =
     (user?.app_metadata?.provider as string | undefined) ?? "email";
   const createdAt = user?.created_at
